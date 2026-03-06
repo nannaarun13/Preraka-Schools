@@ -6,8 +6,8 @@ const Footer = () => {
   const { contactInfo } = state.data;
 
   // Defaults (used if Admin Panel data is empty)
-  const defaultAddress = '8G49+HFJ, Sri Laxmi Nagar Colony, Badangpet, Hyderabad, Telangana 500058';
-  const defaultEmail = 'info@newnarayanaschool.edu';
+  const defaultAddress = 'Raghavendra Nagar, Turkayamjal, Hyderabad, telangana - 501510';
+  const defaultEmail = 'info@Prerakastaff@gmail.com';
   
   // Safe Accessors
   const contactNumbers = contactInfo?.contactNumbers || [];
@@ -95,7 +95,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="text-center mt-12 pt-6 border-t border-white/10">
           <p className="text-sm opacity-70">
-            © {new Date().getFullYear()} New Narayana School. All rights reserved.
+            © {new Date().getFullYear()} Preraka Schools. All rights reserved.
           </p>
         </div>
       </div>
