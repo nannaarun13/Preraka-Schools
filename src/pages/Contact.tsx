@@ -87,7 +87,7 @@ const Contact = () => {
                 <Mail className="h-10 w-10 mx-auto mb-3 text-school-blue" />
                 <h3 className="font-semibold mb-2">Email</h3>
                 <p className="text-gray-600">
-                  {contactInfo?.email || 'info@newnarayanaschool.com'}
+                  {contactInfo?.email || 'info@prerakaschools.com'}
                 </p>
               </CardContent>
             </Card>
