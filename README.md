@@ -1,4 +1,4 @@
-# New Narayana School - Website & Admin Portal
+# Preraka Schools The Schools of Change
 
 A modern, full-stack school management solution featuring a responsive public website and a comprehensive secure admin dashboard. Built with **React**, **TypeScript**, and **Firebase**.
 
