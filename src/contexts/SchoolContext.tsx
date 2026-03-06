@@ -164,14 +164,14 @@ const initializeGalleryImages = (): GalleryImage[] => [
 const initializeNotices = (): Notice[] => [
   {
     id: '1',
-    title: 'Admissions Open for 2024-2025',
-    content: 'Admissions are now open for the academic year 2024-2025. Apply now!',
+    title: 'Admissions Open for 2026-2027',
+    content: 'Admissions are now open for the academic year 2026-2027. Apply now!',
     date: new Date().toLocaleDateString(),
   },
   {
     id: '2',
-    title: 'PTM Scheduled for July 20, 2024',
-    content: 'Parent-Teacher Meeting is scheduled for July 20, 2024. Please make sure to attend.',
+    title: 'PTM Scheduled for July 20, 2026',
+    content: 'Parent-Teacher Meeting is scheduled for July 20, 2026. Please make sure to attend.',
     date: new Date().toLocaleDateString(),
   },
 ];
@@ -180,12 +180,12 @@ const initializeNotices = (): Notice[] => [
 const initializeLatestUpdates = (): LatestUpdate[] => [
   {
     id: '1',
-    content: 'School reopens after summer vacation on June 15, 2024',
+    content: 'School reopens after summer vacation on June 15, 2026',
     date: new Date().toLocaleDateString(),
   },
   {
     id: '2',
-    content: 'Annual Sports Day scheduled for August 10, 2024',
+    content: 'Annual Sports Day scheduled for August 10, 2026',
     date: new Date().toLocaleDateString(),
   },
 ];
@@ -194,36 +194,36 @@ const initializeLatestUpdates = (): LatestUpdate[] => [
 const initializeFounders = (): Founder[] => [
   {
     id: '1',
-    name: 'Dr. Rajesh Kumar',
-    details: 'Founder and Chairman with over 30 years of experience in education',
+    name: 'Sri Ram Ravi Kumar',
+    details: 'Founder and Chairman with over 15 years of experience in education',
     image: 'https://via.placeholder.com/150',
   },
 ];
 
 // Default contact info
 const defaultContactInfo: ContactInfo = {
-  address: '123 Education Street, Hyderabad, Telangana',
-  phone: '+91 9999999999',
-  email: 'info@newnarayanaschool.edu',
+  address: 'Raghavendra Nagar, Turkayamjal, Hyderabad, Telangana-501510',
+  phone: '+91 9876543210',
+  email: 'info@prerakaschools.edu',
   contactNumbers: [
-    { id: '1', number: '+91 9999999999' },
-    { id: '2', number: '+91 8888888888' }
+    { id: '1', number: '+91 9876543210' },
+    { id: '2', number: '+91 9876543210' }
   ],
   mapEmbed: '',
   location: {
-    latitude: 17.3092,
-    longitude: 78.5095
+    latitude: 17.272058,
+    longitude: 78.588692,
   }
 };
 
 // Default data for the school
 export const defaultSchoolData: SchoolData = {
-  schoolName: "NEW NARAYANA SCHOOL",
+  schoolName: "Preraka Schools",
   schoolLogo: "https://via.placeholder.com/150",
   schoolNameImage: "",
-  email: "info@newnarayanaschool.edu",
-  phone: "+91 9999999999",
-  address: "123 Education Street, Hyderabad, Telangana",
+  email: "info@prerakaschools.edu",
+  phone: "+91 9876543210",
+  address: " ",
   navigationItems: [
     { name: "Home", path: "/", visible: true },
     { name: "About", path: "/about", visible: true },
@@ -235,21 +235,21 @@ export const defaultSchoolData: SchoolData = {
   ],
   galleryImages: initializeGalleryImages(),
   notices: initializeNotices(),
-  welcomeMessage: "Welcome to New Narayana School!",
+  welcomeMessage: "Welcome to Preraka Schools /The Change of Schools!",
   welcomeImage: "https://via.placeholder.com/1200x600",
   aboutUsText: "New Narayana School is committed to providing quality education and fostering holistic development in students.",
   aboutContent: "Our school offers a comprehensive education focusing on academic excellence and character development.",
   missionStatement: "To provide quality education that develops each student's potential to thrive as a global citizen.",
   visionStatement: "To be a leading educational institution that empowers students to excel academically and contribute positively to society.",
   contactDetails: {
-    address: "123 Education Street, Hyderabad, Telangana",
-    phone: "+91 9999999999",
-    email: "info@newnarayanaschool.edu",
+    address: "Raghavendra Nagar, Turkayamjal, Hyderabad, Telangana-501510",
+    phone: "+91 9876543210",
+    email: "info@prerakaschools.edu",
   },
   contactInfo: defaultContactInfo,
   latestUpdates: initializeLatestUpdates(),
   founders: initializeFounders(),
-  schoolHistory: "Founded in 1995, New Narayana School has been a pioneer in education for over two decades.",
+  schoolHistory: "Founded in 2026, Preraka Schools has been a pioneer in education for over two decades.",
   founderDetails: "Our founder envisioned an educational institution that would transform young minds into future leaders.",
 };
 
