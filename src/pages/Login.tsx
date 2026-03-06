@@ -19,7 +19,7 @@ const Login = () => {
           <h1 className="text-3xl font-bold text-school-blue mb-2">
             {mode === 'login' ? 'Admin Login' : 'Reset Password'}
           </h1>
-          <p className="text-gray-600">New Narayana School Admin Panel</p>
+          <p className="text-gray-600">Preraka Schools The Change of Schools</p>
         </div>
         
         <Card className="shadow-lg border-t-4 border-t-school-blue">
