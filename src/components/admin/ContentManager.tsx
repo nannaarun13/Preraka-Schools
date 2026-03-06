@@ -24,7 +24,7 @@ const ContentManager = () => {
     missionStatement: state.data.missionStatement,
     visionStatement: state.data.visionStatement,
     schoolLogo: state.data.schoolLogo,
-    schoolName: state.data.schoolName || 'New Narayana School',
+    schoolName: state.data.schoolName || 'Preraka Schools',
     schoolNameImage: state.data.schoolNameImage || ''
   });
   const [isSaving, setIsSaving] = useState(false);
