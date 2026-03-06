@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     // 2. Added the Sitemap plugin here
     Sitemap({ 
-      hostname: "https://newnarayanaschool.netlify.app",
+      hostname: "https://PrerakaSchools.netlify.app",
       dynamicRoutes: ["/", "/about", "/contact"], // Add your specific routes
     }),
   ].filter(Boolean),
