@@ -36,9 +36,7 @@ const AdmissionForm = () => {
     'CLASS 5',
     'CLASS 6',
     'CLASS 7',
-    'CLASS 8',
-    'CLASS 9',
-    'CLASS 10'
+    
   ];
 
   const getClassIndex = (className: string) => {
