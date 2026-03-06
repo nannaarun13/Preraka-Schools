@@ -23,7 +23,7 @@ const Header = () => {
               />
             ) : (
               <h1 className="text-3xl md:text-4xl font-bold tracking-wide">
-                {schoolName || "NEW NARAYANA SCHOOL"}
+                {schoolName || "Preraka Schools"}
               </h1>
             )}
           </div>
