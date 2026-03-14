@@ -1,281 +1,450 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, Shield } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { db } from '@/lib/firebase';
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
-import * as z from "zod";
+import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
+import { subscribeToSchoolData, updateSchoolData } from '@/utils/schoolDataUtils';
+import { Loader2 } from 'lucide-react';
+import { Unsubscribe } from 'firebase/firestore';
 
-// Enhanced validation schema with comprehensive security checks
-const secureRegistrationSchema = z.object({
-  firstName: z.string()
-    .min(1, "First name is required")
-    .max(50, "First name too long")
-    .regex(/^[a-zA-Z\s\-']+$/, "First name can only contain letters, spaces, hyphens, and apostrophes")
-    .transform(name => name.trim().replace(/\s+/g, ' ')),
-  lastName: z.string()
-    .min(1, "Last name is required")
-    .max(50, "Last name too long")
-    .regex(/^[a-zA-Z\s\-']+$/, "Last name can only contain letters, spaces, hyphens, and apostrophes")
-    .transform(name => name.trim().replace(/\s+/g, ' ')),
-  email: z.string()
-    .email("Invalid email address")
-    .max(100, "Email too long")
-    .transform(email => email.toLowerCase().trim())
-    .refine(email => {
-      // Additional email validation
-      const parts = email.split('@');
-      if (parts.length !== 2) return false;
-      const [local, domain] = parts;
-      return local.length > 0 && local.length <= 64 && 
-             domain.length > 0 && domain.length <= 255 &&
-             !domain.includes('..') && !local.includes('..');
-    }, "Invalid email format"),
-  phone: z.string()
-    .regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits")
-    .transform(phone => phone.trim()),
-});
-
-type SecureRegistrationFormData = z.infer<typeof secureRegistrationSchema>;
-
-interface AdminRegistrationFormProps {
-  onSuccess: () => void;
+// Define the data structure for a navigation item
+export interface NavigationItem {
+  name: string;
+  path: string;
+  visible: boolean;
 }
 
-const AdminRegistrationForm = ({ onSuccess }: AdminRegistrationFormProps) => {
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  
-  const form = useForm<SecureRegistrationFormData>({
-    resolver: zodResolver(secureRegistrationSchema),
-    defaultValues: {
-      firstName: '', lastName: '', email: '', phone: ''
-    }
-  });
+// Define the structure for gallery images
+export interface GalleryImage {
+  id: string;
+  url: string;
+  altText: string;
+  caption: string;
+  category: string;
+  date: string;
+}
 
-  // Enhanced duplicate check
-  const checkForDuplicates = async (email: string, phone: string): Promise<void> => {
-    const emailQuery = query(collection(db, "admins"), where("email", "==", email));
-    const phoneQuery = query(collection(db, "admins"), where("phone", "==", `+91${phone}`));
-    
-    const [emailSnapshot, phoneSnapshot] = await Promise.all([
-      getDocs(emailQuery),
-      getDocs(phoneQuery)
-    ]);
-    
-    if (!emailSnapshot.empty) {
-      throw new Error('An admin request with this email already exists.');
-    }
-    
-    if (!phoneSnapshot.empty) {
-      throw new Error('An admin request with this phone number already exists.');
-    }
+// Define the structure for a notice
+export interface Notice {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+}
+
+// Define the structure for an admission inquiry
+export interface AdmissionInquiry {
+  id: string;
+  studentName: string;
+  classApplied: string;
+  previousClass: string;
+  presentClass: string;
+  previousSchool: string;
+  fatherName: string;
+  motherName: string;
+  primaryContact: string;
+  secondaryContact: string;
+  location: string;
+  additionalInfo: string;
+  submittedAt: string;
+}
+
+// Define the structure for contact messages
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  sentAt: string;
+}
+
+// Define the structure for latest updates
+export interface LatestUpdate {
+  id: string;
+  content: string;
+  date: string;
+}
+
+// Define the structure for a founder
+export interface Founder {
+  id: string;
+  name: string;
+  details: string;
+  image: string;
+}
+
+// Define the structure for contact information
+export interface ContactInfo {
+  address: string;
+  phone: string;
+  email: string;
+  contactNumbers: Array<{id: string, number: string}>;
+  mapEmbed?: string;
+  location: {
+    latitude: number;
+    longitude: number;
   };
+}
 
-  const handleSubmit = async (values: SecureRegistrationFormData) => {
-    setLoading(true);
-    
-    try {
-      // Enhanced validation and sanitization
-      const sanitizedData = {
-        firstName: values.firstName.toUpperCase(),
-        lastName: values.lastName.toUpperCase(),
-        email: values.email,
-        phone: values.phone
-      };
-      
-      // Check for duplicates
-      await checkForDuplicates(sanitizedData.email, sanitizedData.phone);
-      
-      // Generate a secure unique ID
-      const requestId = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Enhanced admin data with security timestamps
-      const adminData = {
-        uid: requestId,
-        firstName: sanitizedData.firstName,
-        lastName: sanitizedData.lastName,
-        email: sanitizedData.email,
-        phone: `+91${sanitizedData.phone}`,
-        status: 'pending' as const,
-        requestedAt: new Date().toISOString(),
-        securityVersion: '2.0', // Track security schema version
-        requestIP: 'client-provided', // In production, this should come from server
-        userAgent: navigator.userAgent.substring(0, 500) // Truncated for security
-      };
-
-      await addDoc(collection(db, "admins"), adminData);
-
-      onSuccess();
-      toast({
-        title: "Registration Submitted Successfully",
-        description: "Your admin access request has been submitted and is pending approval. You'll be notified once reviewed.",
-      });
-
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      
-      let errorMessage = "Failed to submit registration. Please try again.";
-      
-      if (error.message.includes('already exists')) {
-        errorMessage = error.message;
-      } else if (error.code === 'permission-denied') {
-        errorMessage = "Permission denied. Please contact the system administrator.";
-      } else if (error.code === 'network-error') {
-        errorMessage = "Network error. Please check your connection and try again.";
-      }
-      
-      toast({ 
-        title: "Registration Failed", 
-        description: errorMessage, 
-        variant: "destructive" 
-      });
-    } finally {
-      setLoading(false);
-    }
+// Define the structure for the school data
+export interface SchoolData {
+  schoolName: string;
+  schoolLogo: string;
+  schoolNameImage: string;
+  email: string;
+  phone: string;
+  address: string;
+  navigationItems: NavigationItem[];
+  galleryImages: GalleryImage[];
+  notices: Notice[];
+  welcomeMessage: string;
+  welcomeImage: string;
+  aboutUsText: string;
+  aboutContent: string;
+  missionStatement: string;
+  visionStatement: string;
+  contactDetails: {
+    address: string;
+    phone: string;
+    email: string;
   };
+  contactInfo: ContactInfo;
+  latestUpdates: LatestUpdate[];
+  founders: Founder[];
+  schoolHistory: string;
+  founderDetails: string;
+}
 
-  return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <div className="flex items-center justify-center mb-4">
-          <Shield className="h-8 w-8 text-school-blue" />
-        </div>
-        <CardTitle className="text-2xl text-center text-school-blue">
-          Register for Admin Access
-        </CardTitle>
-        <p className="text-center text-gray-600 text-sm">
-          Request administrative access to the school management system
-        </p>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-               <FormField control={form.control} name="firstName" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="First name" 
-                        {...field} 
-                        disabled={loading}
-                        maxLength={50}
-                        autoComplete="given-name"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-               <FormField control={form.control} name="lastName" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Last name" 
-                        {...field} 
-                        disabled={loading}
-                        maxLength={50}
-                        autoComplete="family-name"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-            </div>
-            <FormField control={form.control} name="email" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email Address *</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="email" 
-                    placeholder="your.email@domain.com" 
-                    {...field} 
-                    disabled={loading}
-                    maxLength={100}
-                    autoComplete="email"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="phone" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone Number *</FormLabel>
-                <FormControl>
-                  <div className="flex">
-                    <span className="flex items-center px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md text-gray-700 font-medium">
-                      +91
-                    </span>
-                    <Input 
-                      type="tel" 
-                      placeholder="9876543210" 
-                      maxLength={10}
-                      className="rounded-l-none"
-                      {...field} 
-                      disabled={loading}
-                      autoComplete="tel"
-                      onInput={(e) => {
-                        // Only allow digits
-                        const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/[^0-9]/g, '');
-                      }}
-                    />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">Security Notice</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Your request will be reviewed by existing administrators</li>
-                <li>• You'll receive notification once your request is processed</li>
-                <li>• After approval, create your Firebase account using the same email</li>
-                <li>• All registration attempts are logged for security purposes</li>
-              </ul>
-            </div>
-            
-            <Button type="submit" disabled={loading} className="w-full bg-school-blue hover:bg-school-blue/90">
-              {loading ? (
-                <div className="flex items-center space-x-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Submitting Request...</span>
-                </div>
-              ) : (
-                'Submit Registration Request'
-              )}
-            </Button>
-          </form>
-        </Form>
-        <div className="mt-6 text-center space-y-2">
-          <p className="text-sm text-gray-600">
-            Already have access?{' '}
-            <Button 
-              variant="link" 
-              className="text-school-blue p-0 h-auto" 
-              onClick={() => navigate('/login')}
-              disabled={loading}
-            >
-              Sign In
-            </Button>
-          </p>
-          <p className="text-xs text-gray-500">
-            By submitting this form, you agree to our terms of service and privacy policy.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
+// Define the state structure for the school context
+export interface SchoolState {
+  data: SchoolData;
+  admissionInquiries: AdmissionInquiry[];
+  contactMessages: ContactMessage[];
+  siteVisitors: number;
+  loading: boolean;
+}
+
+// Define the actions that can be dispatched to update the state
+export type SchoolAction =
+  | { type: 'SET_SCHOOL_DATA'; payload: SchoolData }
+  | { type: 'UPDATE_SCHOOL_DATA'; payload: Partial<SchoolData> }
+  | { type: 'ADD_GALLERY_IMAGE'; payload: GalleryImage }
+  | { type: 'UPDATE_GALLERY_IMAGE'; payload: GalleryImage }
+  | { type: 'DELETE_GALLERY_IMAGE'; payload: string }
+  | { type: 'ADD_NOTICE'; payload: Notice }
+  | { type: 'UPDATE_NOTICE'; payload: { id: string; title: string; content: string } }
+  | { type: 'DELETE_NOTICE'; payload: string }
+  | { type: 'ADD_ADMISSION_INQUIRY'; payload: AdmissionInquiry }
+  | { type: 'ADD_CONTACT_MESSAGE'; payload: ContactMessage }
+  | { type: 'INCREMENT_VISITORS' }
+  | { type: 'ADD_LATEST_UPDATE'; payload: LatestUpdate }
+  | { type: 'DELETE_LATEST_UPDATE'; payload: string }
+  | { type: 'ADD_FOUNDER'; payload: Founder }
+  | { type: 'DELETE_FOUNDER'; payload: string };
+
+// Helper function to initialize gallery images with default data
+const initializeGalleryImages = (): GalleryImage[] => [
+  { 
+    id: '1', 
+    url: 'https://via.placeholder.com/300', 
+    altText: 'School Building', 
+    caption: 'School Building',
+    category: 'General',
+    date: new Date().toLocaleDateString() 
+  },
+  { 
+    id: '2', 
+    url: 'https://via.placeholder.com/300', 
+    altText: 'Classroom', 
+    caption: 'Modern Classroom',
+    category: 'Facilities',
+    date: new Date().toLocaleDateString()
+  },
+];
+
+// Helper function to initialize notices with default data
+const initializeNotices = (): Notice[] => [
+  {
+    id: '1',
+    title: 'Admissions Open for 2026-2027',
+    content: 'Admissions are now open for the academic year 2026-2027. Apply now!',
+    date: new Date().toLocaleDateString(),
+  },
+  {
+    id: '2',
+    title: 'PTM Scheduled for July 20, 2026',
+    content: 'Parent-Teacher Meeting is scheduled for July 20, 2026. Please make sure to attend.',
+    date: new Date().toLocaleDateString(),
+  },
+];
+
+// Helper function to initialize latest updates
+const initializeLatestUpdates = (): LatestUpdate[] => [
+  {
+    id: '1',
+    content: 'School reopens after summer vacation on June 15, 2026',
+    date: new Date().toLocaleDateString(),
+  },
+  {
+    id: '2',
+    content: 'Annual Sports Day scheduled for August 10, 2026',
+    date: new Date().toLocaleDateString(),
+  },
+];
+
+// Helper function to initialize founders
+const initializeFounders = (): Founder[] => [
+  {
+    id: '1',
+    name: 'Sri Ram Ravi Kumar',
+    details: 'Founder and Chairman with over 15 years of experience in education',
+    image: 'https://via.placeholder.com/150',
+  },
+];
+
+// Default contact info
+const defaultContactInfo: ContactInfo = {
+  address: 'Raghavendra Nagar, Turkayamjal, Hyderabad, Telangana-501510',
+  phone: '+91 9876543210',
+  email: 'info@prerakaschools.edu',
+  contactNumbers: [
+    { id: '1', number: '+91 9876543210' },
+    { id: '2', number: '+91 9876543210' }
+  ],
+  mapEmbed: '',
+  location: {
+    latitude: 17.272058,
+    longitude: 78.588692,
+  }
 };
 
-export default AdminRegistrationForm;
+// Default data for the school
+export const defaultSchoolData: SchoolData = {
+  schoolName: "Preraka Schools",
+  schoolLogo: "https://via.placeholder.com/150",
+  schoolNameImage: "",
+  email: "info@prerakaschools.edu",
+  phone: "+91 9876543210",
+  address: " ",
+  navigationItems: [
+    { name: "Home", path: "/", visible: true },
+    { name: "About", path: "/about", visible: true },
+    { name: "Admissions", path: "/admissions", visible: true },
+    { name: "Gallery", path: "/gallery", visible: true },
+    { name: "Notice Board", path: "/notice-board", visible: true },
+    { name: "Contact", path: "/contact", visible: true },
+    { name: "Login", path: "/login", visible: true },
+  ],
+  galleryImages: initializeGalleryImages(),
+  notices: initializeNotices(),
+  welcomeMessage: "Welcome to Preraka Schools /The Change of Schools!",
+  welcomeImage: "https://via.placeholder.com/1200x600",
+  aboutUsText: "New Narayana School is committed to providing quality education and fostering holistic development in students.",
+  aboutContent: "Our school offers a comprehensive education focusing on academic excellence and character development.",
+  missionStatement: "To provide quality education that develops each student's potential to thrive as a global citizen.",
+  visionStatement: "To be a leading educational institution that empowers students to excel academically and contribute positively to society.",
+  contactDetails: {
+    address: "Raghavendra Nagar, Turkayamjal, Hyderabad, Telangana-501510",
+    phone: "+91 9876543210",
+    email: "info@prerakaschools.edu",
+  },
+  contactInfo: defaultContactInfo,
+  latestUpdates: initializeLatestUpdates(),
+  founders: initializeFounders(),
+  schoolHistory: "Founded in 2026, Preraka Schools has been a pioneer in education for over two decades.",
+  founderDetails: "Our founder envisioned an educational institution that would transform young minds into future leaders.",
+};
+
+const initialState: SchoolState = {
+  data: defaultSchoolData,
+  admissionInquiries: [],
+  contactMessages: [],
+  siteVisitors: 0,
+  loading: true,
+};
+
+// Enhanced reducer with optimistic updates and better persistence
+const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState => {
+  switch (action.type) {
+    case 'SET_SCHOOL_DATA':
+      return { ...state, data: action.payload, loading: false };
+    case 'UPDATE_SCHOOL_DATA':
+      const updatedData = { ...state.data, ...action.payload };
+      // Immediate local update (optimistic)
+      updateSchoolData(action.payload).catch(error => {
+        console.error('Failed to sync to database:', error);
+        // Data remains updated locally even if sync fails
+      });
+      return { ...state, data: updatedData };
+    case 'ADD_GALLERY_IMAGE':
+      const newGalleryData = { ...state.data, galleryImages: [...state.data.galleryImages, action.payload] };
+      updateSchoolData({ galleryImages: newGalleryData.galleryImages }).catch(console.error);
+      return { ...state, data: newGalleryData };
+    case 'UPDATE_GALLERY_IMAGE':
+      const updatedGalleryData = {
+        ...state.data,
+        galleryImages: state.data.galleryImages.map(image =>
+          image.id === action.payload.id ? action.payload : image
+        ),
+      };
+      updateSchoolData({ galleryImages: updatedGalleryData.galleryImages }).catch(console.error);
+      return { ...state, data: updatedGalleryData };
+    case 'DELETE_GALLERY_IMAGE':
+      const filteredGalleryData = {
+        ...state.data,
+        galleryImages: state.data.galleryImages.filter(image => image.id !== action.payload),
+      };
+      updateSchoolData({ galleryImages: filteredGalleryData.galleryImages }).catch(console.error);
+      return { ...state, data: filteredGalleryData };
+    case 'ADD_NOTICE':
+      const newNoticesData = { ...state.data, notices: [...state.data.notices, action.payload] };
+      updateSchoolData({ notices: newNoticesData.notices }).catch(console.error);
+      return { ...state, data: newNoticesData };
+    case 'UPDATE_NOTICE':
+      const updatedNoticesData = {
+        ...state.data,
+        notices: state.data.notices.map(notice =>
+          notice.id === action.payload.id ? { ...notice, title: action.payload.title, content: action.payload.content } : notice
+        ),
+      };
+      updateSchoolData({ notices: updatedNoticesData.notices }).catch(console.error);
+      return { ...state, data: updatedNoticesData };
+    case 'DELETE_NOTICE':
+      const filteredNoticesData = {
+        ...state.data,
+        notices: state.data.notices.filter(notice => notice.id !== action.payload),
+      };
+      updateSchoolData({ notices: filteredNoticesData.notices }).catch(console.error);
+      return { ...state, data: filteredNoticesData };
+    case 'ADD_ADMISSION_INQUIRY':
+      return { ...state, admissionInquiries: [...state.admissionInquiries, action.payload] };
+    case 'ADD_CONTACT_MESSAGE':
+      return { ...state, contactMessages: [...state.contactMessages, action.payload] };
+    case 'INCREMENT_VISITORS':
+      return { ...state, siteVisitors: state.siteVisitors + 1 };
+    case 'ADD_LATEST_UPDATE':
+      const newUpdatesData = { 
+        ...state.data, 
+        latestUpdates: [...state.data.latestUpdates, action.payload] 
+      };
+      updateSchoolData({ latestUpdates: newUpdatesData.latestUpdates }).catch(console.error);
+      return { ...state, data: newUpdatesData };
+    case 'DELETE_LATEST_UPDATE':
+      const filteredUpdatesData = {
+        ...state.data,
+        latestUpdates: state.data.latestUpdates.filter(update => update.id !== action.payload),
+      };
+      updateSchoolData({ latestUpdates: filteredUpdatesData.latestUpdates }).catch(console.error);
+      return { ...state, data: filteredUpdatesData };
+    case 'ADD_FOUNDER':
+      const newFoundersData = { 
+        ...state.data, 
+        founders: [...state.data.founders, action.payload] 
+      };
+      updateSchoolData({ founders: newFoundersData.founders }).catch(console.error);
+      return { ...state, data: newFoundersData };
+    case 'DELETE_FOUNDER':
+      const filteredFoundersData = {
+        ...state.data,
+        founders: state.data.founders.filter(founder => founder.id !== action.payload),
+      };
+      updateSchoolData({ founders: filteredFoundersData.founders }).catch(console.error);
+      return { ...state, data: filteredFoundersData };
+    default:
+      return state;
+  }
+};
+
+// Create the school context
+const SchoolContext = createContext<{
+  state: SchoolState;
+  dispatch: React.Dispatch<SchoolAction>;
+}>({
+  state: initialState,
+  dispatch: () => null,
+});
+
+export const useSchool = () => {
+  const context = useContext(SchoolContext);
+  
+  if (!context) {
+    throw new Error('useSchool must be used within a SchoolContextProvider');
+  }
+  
+  return context;
+};
+
+export const SchoolContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(schoolReducer, initialState);
+  const unsubscribeRef = useRef<Unsubscribe | null>(null);
+
+  useEffect(() => {
+    console.log('Setting up real-time listener for school data...');
+    
+    // Set up real-time listener that works for ALL pages
+    unsubscribeRef.current = subscribeToSchoolData(
+      (data) => {
+        console.log('Real-time data update received:', data);
+        dispatch({ type: 'SET_SCHOOL_DATA', payload: data });
+      },
+      (error) => {
+        console.error("Real-time subscription error:", error);
+        // Still set loading to false and use cached data
+        const cachedData = localStorage.getItem('schoolData');
+        if (cachedData) {
+          try {
+            const parsedData = JSON.parse(cachedData);
+            dispatch({ type: 'SET_SCHOOL_DATA', payload: { ...defaultSchoolData, ...parsedData } });
+          } catch (parseError) {
+            console.error('Failed to parse cached data:', parseError);
+            dispatch({ type: 'SET_SCHOOL_DATA', payload: defaultSchoolData });
+          }
+        } else {
+          dispatch({ type: 'SET_SCHOOL_DATA', payload: defaultSchoolData });
+        }
+      }
+    );
+
+    // Cleanup function
+    return () => {
+      if (unsubscribeRef.current) {
+        console.log('Cleaning up real-time listener...');
+        unsubscribeRef.current();
+      }
+    };
+  }, []);
+
+  // Handle online/offline events to retry sync
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log('Connection restored, data will sync automatically...');
+    };
+
+    const handleOffline = () => {
+      console.log('Connection lost, changes will be queued for sync...');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  if (state.loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white z-[999]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-school-blue" />
+          <p className="text-lg text-gray-700">Loading School Data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <SchoolContext.Provider value={{ state, dispatch }}>
+      {children}
+    </SchoolContext.Provider>
+  );
+}; 
