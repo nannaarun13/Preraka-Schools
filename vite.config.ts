@@ -2,9 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { fileURLToPath } from "url";
-import Sitemap from "vite-plugin-sitemap"; // 1. Added this import
+import Sitemap from "vite-plugin-sitemap";
 
-// Standard way to define __dirname in ESM for reliable Vercel builds
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -13,21 +12,32 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+
   plugins: [
     react(),
-    // 2. Added the Sitemap plugin here
-    Sitemap({ 
-      hostname: "https://PrerakaSchools.netlify.app",
-      dynamicRoutes: ["/", "/about", "/contact"], // Add your specific routes
+
+    Sitemap({
+      hostname: "https://prerakaschools.netlify.app",
+      outDir: "dist",                 // ⭐ important fix
+      generateRobotsTxt: true,       // generate robots.txt safely
+      dynamicRoutes: [
+        "/",
+        "/about",
+        "/contact"
+      ],
     }),
-  ].filter(Boolean),
+
+  ],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
   build: {
     outDir: "dist",
+    emptyOutDir: true,               // ensures dist exists
     minify: "esbuild",
     sourcemap: mode === "development",
   },
