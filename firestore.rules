@@ -6,53 +6,53 @@ service cloud.firestore {
        PUBLIC WEBSITE CONTENT
     =============================== */
 
+    // School configuration
     match /school/{docId} {
       allow read: if true;
       allow write: if isApprovedAdmin();
     }
 
+    // Notices
     match /notices/{docId} {
       allow read: if true;
       allow write: if isApprovedAdmin();
     }
 
+    // Gallery
     match /gallery/{docId} {
       allow read: if true;
       allow write: if isApprovedAdmin();
     }
 
+    // Static content
     match /content/{docId} {
       allow read: if true;
       allow write: if isApprovedAdmin();
     }
 
+    // Admissions
     match /admissions/{docId} {
       allow create: if true;
       allow read, update, delete: if isApprovedAdmin();
     }
 
     /* ===============================
-       ADMINS (🔥 FIXED)
+       ADMINS
     =============================== */
 
     match /admins/{userId} {
 
-      // ✅ User can read ONLY their own admin document
-      allow read: if request.auth != null
-                  && request.auth.uid == userId;
+      // user can read their own admin document
+      allow read: if request.auth != null &&
+                  request.auth.uid == userId;
 
-      // ✅ Allow first-time creation (pending OR approved)
-      allow create: if request.auth != null
-                    && request.auth.uid == userId
-                    && (
-                      request.resource.data.status == 'pending' ||
-                      request.resource.data.status == 'approved'
-                    );
+      // allow admin registration
+      allow create: if request.auth != null &&
+                    request.auth.uid == userId;
 
-      // ✅ Only approved admins can update admin docs
+      // only approved admins can update
       allow update: if isApprovedAdmin();
 
-      // ❌ No deletes from client
       allow delete: if false;
     }
 
@@ -75,14 +75,13 @@ service cloud.firestore {
     }
 
     /* ===============================
-       HELPERS
+       HELPER FUNCTION
     =============================== */
 
     function isApprovedAdmin() {
       return request.auth != null &&
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid))
-          .data.status == 'approved';
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.status == "approved";
     }
   }
 }
