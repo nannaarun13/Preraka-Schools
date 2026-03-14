@@ -130,7 +130,7 @@ export const subscribeToSchoolData = (
         setTimeout(() => processPendingUpdates().catch(console.error), 2000);
       } else {
         // FIX: Do NOT write to DB here. Just use defaults locally.
-        console.warn('School config document not found. Using defaults.');
+        console.warn('School config document found. Using defaults.');
         localStorage.setItem('schoolData', JSON.stringify(defaultSchoolData));
         callback(defaultSchoolData);
       }
