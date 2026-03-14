@@ -82,6 +82,7 @@ export const defaultSchoolData: SchoolData = {
     { name: "Gallery", path: "/gallery", visible: true },
     { name: "Notice Board", path: "/notice-board", visible: true },
     { name: "Contact", path: "/contact", visible: true },
+    { name: "Login", path: "/login", visible: true }, // ✅ FIXED (added login)
   ],
   galleryImages: [],
   notices: [],
@@ -109,7 +110,7 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
     case "SET_SCHOOL_DATA":
       return { ...state, data: action.payload, loading: false };
 
-    case "UPDATE_SCHOOL_DATA":
+    case "UPDATE_SCHOOL_DATA": {
       const updatedData = { ...state.data, ...action.payload };
 
       updateSchoolData(action.payload).catch((err) =>
@@ -117,8 +118,9 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
       );
 
       return { ...state, data: updatedData };
+    }
 
-    case "ADD_NOTICE":
+    case "ADD_NOTICE": {
       const newNotices = [...state.data.notices, action.payload];
 
       updateSchoolData({ notices: newNotices }).catch(console.error);
@@ -127,8 +129,9 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
         ...state,
         data: { ...state.data, notices: newNotices },
       };
+    }
 
-    case "DELETE_NOTICE":
+    case "DELETE_NOTICE": {
       const filteredNotices = state.data.notices.filter(
         (n) => n.id !== action.payload
       );
@@ -139,6 +142,7 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
         ...state,
         data: { ...state.data, notices: filteredNotices },
       };
+    }
 
     default:
       return state;
@@ -158,7 +162,13 @@ const SchoolContext = createContext<{
 /* ---------------- HOOK ---------------- */
 
 export const useSchool = () => {
-  return useContext(SchoolContext);
+  const context = useContext(SchoolContext);
+
+  if (!context) {
+    throw new Error("useSchool must be used inside SchoolContextProvider");
+  }
+
+  return context;
 };
 
 /* ---------------- PROVIDER ---------------- */
@@ -176,20 +186,24 @@ export const SchoolContextProvider: React.FC<{ children: React.ReactNode }> = ({
       (data) => {
         dispatch({ type: "SET_SCHOOL_DATA", payload: data });
 
-        localStorage.setItem("schoolData", JSON.stringify(data));
+        if (typeof window !== "undefined") {
+          localStorage.setItem("schoolData", JSON.stringify(data));
+        }
       },
       (error) => {
         console.error("Firestore realtime error:", error);
 
-        const cached = localStorage.getItem("schoolData");
+        if (typeof window !== "undefined") {
+          const cached = localStorage.getItem("schoolData");
 
-        if (cached) {
-          dispatch({
-            type: "SET_SCHOOL_DATA",
-            payload: { ...defaultSchoolData, ...JSON.parse(cached) },
-          });
-        } else {
-          dispatch({ type: "SET_SCHOOL_DATA", payload: defaultSchoolData });
+          if (cached) {
+            dispatch({
+              type: "SET_SCHOOL_DATA",
+              payload: { ...defaultSchoolData, ...JSON.parse(cached) },
+            });
+          } else {
+            dispatch({ type: "SET_SCHOOL_DATA", payload: defaultSchoolData });
+          }
         }
       }
     );
