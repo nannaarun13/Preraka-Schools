@@ -1,379 +1,93 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-Select,
-SelectContent,
-SelectItem,
-SelectTrigger,
-SelectValue
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect,useState } from "react";
+import { collection,getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import * as XLSX from "xlsx";
 
-const AdmissionForm = () => {
+const Admissions = ()=>{
 
-const { toast } = useToast();
+const [data,setData]=useState<any[]>([]);
 
-const [formData,setFormData] = useState({
-studentName:"",
-classApplied:"",
-previousClass:"",
-previousSchool:"",
-fatherName:"",
-motherName:"",
-primaryContact:"",
-secondaryContact:"",
-location:"",
-additionalInfo:""
-});
+const load=async()=>{
 
-const classes = [
-"NURSERY",
-"LKG",
-"UKG",
-"CLASS 1",
-"CLASS 2",
-"CLASS 3",
-"CLASS 4",
-"CLASS 5",
-"CLASS 6",
-"CLASS 7"
-];
+const snap=await getDocs(collection(db,"admissions"));
 
-const formatPhone = (value:string) => {
-
-let digits = value.replace(/\D/g,"");
-
-if(digits.length > 10){
-digits = digits.slice(0,10);
-}
-
-if(digits.length > 5){
-return digits.slice(0,5) + " " + digits.slice(5);
-}
-
-return digits;
-};
-
-const handleChange = (e:any)=>{
-
-const {name,value} = e.target;
-
-if(name==="primaryContact" || name==="secondaryContact"){
-setFormData(prev=>({
-...prev,
-[name]:formatPhone(value)
-}));
-return;
-}
-
-if(["studentName","fatherName","motherName","location","previousSchool"].includes(name)){
-setFormData(prev=>({
-...prev,
-[name]:value.toUpperCase()
-}));
-return;
-}
-
-setFormData(prev=>({...prev,[name]:value}));
+setData(
+snap.docs.map(d=>({
+id:d.id,
+...d.data()
+}))
+);
 
 };
 
-const handleSelect = (name:string,value:string)=>{
-setFormData(prev=>({...prev,[name]:value}));
-};
+useEffect(()=>{
+load();
+},[]);
 
-const validateForm = ()=>{
+const exportExcel=()=>{
 
-if(
-!formData.studentName ||
-!formData.classApplied ||
-!formData.previousClass ||
-!formData.fatherName ||
-!formData.motherName ||
-!formData.primaryContact ||
-!formData.location
-){
-toast({
-title:"Fill Required Fields",
-description:"All * fields are mandatory",
-variant:"destructive"
-});
-return false;
-}
+const sheet=XLSX.utils.json_to_sheet(data);
 
-const phone = formData.primaryContact.replace(/\s/g,"");
+const book=XLSX.utils.book_new();
 
-if(phone.length !== 10){
-toast({
-title:"Invalid Mobile Number",
-description:"Mobile number must be 10 digits",
-variant:"destructive"
-});
-return false;
-}
+XLSX.utils.book_append_sheet(book,sheet,"Admissions");
 
-return true;
-
-};
-
-const handleSubmit = (e:any)=>{
-
-e.preventDefault();
-
-if(!validateForm()) return;
-
-const finalData = {
-...formData,
-primaryContact:"+91 "+formData.primaryContact,
-secondaryContact:formData.secondaryContact
-? "+91 "+formData.secondaryContact
-:""
-};
-
-console.log(finalData);
-
-toast({
-title:"Admission Submitted",
-description:"We will contact you soon."
-});
-
-setFormData({
-studentName:"",
-classApplied:"",
-previousClass:"",
-previousSchool:"",
-fatherName:"",
-motherName:"",
-primaryContact:"",
-secondaryContact:"",
-location:"",
-additionalInfo:""
-});
+XLSX.writeFile(book,"Admissions.xlsx");
 
 };
 
 return(
 
-<section>
+<div>
 
-<Card className="max-w-4xl mx-auto">
+<h2 className="text-xl font-bold">
+Admissions
+</h2>
 
-<CardHeader className="bg-blue-600 text-white text-center">
-<CardTitle>Admission Inquiry Form</CardTitle>
-</CardHeader>
+<button onClick={exportExcel}>
+Export Excel
+</button>
 
-<CardContent className="p-8">
+<table border={1}>
 
-<form onSubmit={handleSubmit} className="space-y-8">
+<thead>
 
-<div className="grid md:grid-cols-2 gap-x-6 gap-y-8">
+<tr>
+<th>Student</th>
+<th>Class</th>
+<th>Previous</th>
+<th>Father</th>
+<th>Mother</th>
+<th>Phone</th>
+<th>Location</th>
+</tr>
 
-<div className="space-y-1">
+</thead>
 
-<Label>Student Name *</Label>
+<tbody>
 
-<Input
-name="studentName"
-value={formData.studentName}
-onChange={handleChange}
-placeholder="ENTER STUDENT NAME"
-className="uppercase h-12"
-required
-/>
+{data.map(a=>(
+<tr key={a.id}>
 
-</div>
+<td>{a.studentName}</td>
+<td>{a.classApplied}</td>
+<td>{a.previousClass}</td>
+<td>{a.fatherName}</td>
+<td>{a.motherName}</td>
+<td>{a.primaryContact}</td>
+<td>{a.location}</td>
 
-<div className="space-y-1">
-
-<Label>Class Applied For *</Label>
-
-<Select
-value={formData.classApplied}
-onValueChange={(v)=>handleSelect("classApplied",v)}
->
-
-<SelectTrigger className="h-12">
-<SelectValue placeholder="Select class"/>
-</SelectTrigger>
-
-<SelectContent>
-{classes.map(c=>(
-<SelectItem key={c} value={c}>{c}</SelectItem>
+</tr>
 ))}
-</SelectContent>
 
-</Select>
+</tbody>
 
-</div>
-
-<div className="space-y-1">
-
-<Label>Previous Class *</Label>
-
-<Select
-value={formData.previousClass}
-onValueChange={(v)=>handleSelect("previousClass",v)}
->
-
-<SelectTrigger className="h-12">
-<SelectValue placeholder="Select previous class"/>
-</SelectTrigger>
-
-<SelectContent>
-{classes.map(c=>(
-<SelectItem key={c} value={c}>{c}</SelectItem>
-))}
-</SelectContent>
-
-</Select>
+</table>
 
 </div>
-
-<div className="space-y-1">
-
-<Label>Previous School</Label>
-
-<Input
-name="previousSchool"
-value={formData.previousSchool}
-onChange={handleChange}
-placeholder="ENTER PREVIOUS SCHOOL"
-className="uppercase h-12"
-/>
-
-</div>
-
-<div className="space-y-1">
-
-<Label>Father's Name *</Label>
-
-<Input
-name="fatherName"
-value={formData.fatherName}
-onChange={handleChange}
-placeholder="ENTER FATHER NAME"
-className="uppercase h-12"
-required
-/>
-
-</div>
-
-<div className="space-y-1">
-
-<Label>Mother's Name *</Label>
-
-<Input
-name="motherName"
-value={formData.motherName}
-onChange={handleChange}
-placeholder="ENTER MOTHER NAME"
-className="uppercase h-12"
-required
-/>
-
-</div>
-
-<div className="space-y-1">
-
-<Label>Primary Contact *</Label>
-
-<div className="flex items-center border rounded-md h-12">
-
-<span className="px-3 bg-gray-100 border-r text-sm font-medium">
-+91
-</span>
-
-<input
-type="text"
-name="primaryContact"
-value={formData.primaryContact}
-onChange={handleChange}
-className="flex-1 px-3 outline-none"
-placeholder="98765 43210"
-required
-/>
-
-</div>
-
-</div>
-
-<div className="space-y-1">
-
-<Label>Secondary Contact</Label>
-
-<div className="flex items-center border rounded-md h-12">
-
-<span className="px-3 bg-gray-100 border-r text-sm font-medium">
-+91
-</span>
-
-<input
-type="text"
-name="secondaryContact"
-value={formData.secondaryContact}
-onChange={handleChange}
-className="flex-1 px-3 outline-none"
-placeholder="98765 43210"
-/>
-
-</div>
-
-</div>
-
-<div className="md:col-span-2 space-y-1">
-
-<Label>Location / Address *</Label>
-
-<Input
-name="location"
-value={formData.location}
-onChange={handleChange}
-placeholder="ENTER LOCATION / ADDRESS"
-className="uppercase h-12"
-required
-/>
-
-</div>
-
-</div>
-
-<div className="space-y-1">
-
-<Label>Additional Information</Label>
-
-<Textarea
-name="additionalInfo"
-value={formData.additionalInfo}
-onChange={handleChange}
-rows={4}
-placeholder="Any additional information"
-/>
-
-</div>
-
-<Button
-type="submit"
-className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg"
->
-
-Submit Admission Inquiry
-
-</Button>
-
-</form>
-
-</CardContent>
-
-</Card>
-
-</section>
 
 );
 
 };
 
-export default AdmissionForm;
+export default Admissions;
