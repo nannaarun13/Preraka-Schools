@@ -1,167 +1,403 @@
-import { useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
-type AdmissionFormData = {
-  studentName: string;
-  classApplied: string;
-  previousClass: string;
-  fatherName: string;
-  motherName: string;
-  primaryContact: string;
-  location: string;
-};
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 
 const AdmissionForm = () => {
 
-  const [form, setForm] = useState<AdmissionFormData>({
-    studentName: "",
-    classApplied: "",
-    previousClass: "",
-    fatherName: "",
-    motherName: "",
-    primaryContact: "",
-    location: ""
-  });
+const { toast } = useToast()
 
-  const [loading, setLoading] = useState(false);
+const [formData, setFormData] = useState({
+  studentName:"",
+  classApplied:"",
+  previousClass:"",
+  previousSchool:"",
+  fatherName:"",
+  motherName:"",
+  primaryContact:"",
+  secondaryContact:"",
+  location:"",
+  additionalInfo:""
+})
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value
-    });
-  };
+const classes = [
+"NURSERY",
+"LKG",
+"UKG",
+"CLASS 1",
+"CLASS 2",
+"CLASS 3",
+"CLASS 4",
+"CLASS 5",
+"CLASS 6",
+"CLASS 7"
+]
 
-  const handleSubmit = async (e: React.FormEvent) => {
+/* ---------------- PHONE FORMAT ---------------- */
 
-    e.preventDefault();
+const formatPhone = (value:string) => {
 
-    try {
+let digits = value.replace(/\D/g,"")
 
-      setLoading(true);
+if(digits.length > 10){
+digits = digits.slice(0,10)
+}
 
-      await addDoc(collection(db, "admissions"), {
-        ...form,
-        createdAt: serverTimestamp()
-      });
+if(digits.length > 5){
+return digits.slice(0,5) + " " + digits.slice(5)
+}
 
-      alert("Admission submitted successfully");
+return digits
+}
 
-      setForm({
-        studentName: "",
-        classApplied: "",
-        previousClass: "",
-        fatherName: "",
-        motherName: "",
-        primaryContact: "",
-        location: ""
-      });
+/* ---------------- INPUT CHANGE ---------------- */
 
-    } catch (error) {
+const handleChange = (e:any) => {
 
-      console.error("Submission error:", error);
-      alert("Failed to submit admission");
+const {name,value} = e.target
 
-    } finally {
+if(name==="primaryContact" || name==="secondaryContact"){
 
-      setLoading(false);
+const formatted = formatPhone(value)
 
-    }
+setFormData(prev=>({...prev,[name]:formatted}))
 
-  };
+return
+}
 
-  return (
+if(["studentName","fatherName","motherName","location","previousSchool"].includes(name)){
 
-    <div className="max-w-xl mx-auto p-6">
+setFormData(prev=>({...prev,[name]:value.toUpperCase()}))
 
-      <h2 className="text-2xl font-bold mb-6 text-center">
-        Student Admission Form
-      </h2>
+return
+}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+setFormData(prev=>({...prev,[name]:value}))
+}
 
-        <input
-          type="text"
-          name="studentName"
-          placeholder="Student Name"
-          value={form.studentName}
-          onChange={handleChange}
-          required
-          className="border p-2 w-full"
-        />
+/* ---------------- SELECT CHANGE ---------------- */
 
-        <input
-          type="text"
-          name="classApplied"
-          placeholder="Class Applying For"
-          value={form.classApplied}
-          onChange={handleChange}
-          required
-          className="border p-2 w-full"
-        />
+const handleSelect = (name:string,value:string)=>{
 
-        <input
-          type="text"
-          name="previousClass"
-          placeholder="Previous Class"
-          value={form.previousClass}
-          onChange={handleChange}
-          className="border p-2 w-full"
-        />
+setFormData(prev=>({...prev,[name]:value, previousClass:""}))
 
-        <input
-          type="text"
-          name="fatherName"
-          placeholder="Father Name"
-          value={form.fatherName}
-          onChange={handleChange}
-          required
-          className="border p-2 w-full"
-        />
+}
 
-        <input
-          type="text"
-          name="motherName"
-          placeholder="Mother Name"
-          value={form.motherName}
-          onChange={handleChange}
-          className="border p-2 w-full"
-        />
+/* ---------------- FILTER PREVIOUS CLASS ---------------- */
 
-        <input
-          type="tel"
-          name="primaryContact"
-          placeholder="Phone Number"
-          value={form.primaryContact}
-          onChange={handleChange}
-          required
-          className="border p-2 w-full"
-        />
+const getPreviousClasses = () => {
 
-        <input
-          type="text"
-          name="location"
-          placeholder="Location"
-          value={form.location}
-          onChange={handleChange}
-          className="border p-2 w-full"
-        />
+const index = classes.indexOf(formData.classApplied)
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 w-full"
-        >
-          {loading ? "Submitting..." : "Submit Admission"}
-        </button>
+if(index === -1) return classes
 
-      </form>
+return classes.slice(0,index)
 
-    </div>
+}
 
-  );
+/* ---------------- VALIDATION ---------------- */
 
-};
+const validateForm = ()=>{
 
-export default AdmissionForm;
+if(!formData.studentName ||
+!formData.classApplied ||
+!formData.previousClass ||
+!formData.fatherName ||
+!formData.motherName ||
+!formData.primaryContact ||
+!formData.location){
+
+toast({
+title:"Validation Error",
+description:"Please fill all required fields marked with *",
+variant:"destructive"
+})
+
+return false
+}
+
+const phone = formData.primaryContact.replace(/\s/g,"")
+
+if(phone.length !== 10){
+
+toast({
+title:"Invalid Phone Number",
+description:"Primary contact number must be exactly 10 digits",
+variant:"destructive"
+})
+
+return false
+}
+
+return true
+}
+
+/* ---------------- SUBMIT ---------------- */
+
+const handleSubmit = (e:any)=>{
+
+e.preventDefault()
+
+if(!validateForm()) return
+
+toast({
+title:"Admission Submitted",
+description:"Your admission inquiry has been submitted successfully."
+})
+
+setFormData({
+studentName:"",
+classApplied:"",
+previousClass:"",
+previousSchool:"",
+fatherName:"",
+motherName:"",
+primaryContact:"",
+secondaryContact:"",
+location:"",
+additionalInfo:""
+})
+
+}
+
+/* ---------------- UI ---------------- */
+
+return(
+
+<section>
+
+<Card className="max-w-4xl mx-auto">
+
+<CardHeader className="bg-blue-600 text-white text-center">
+<CardTitle>Admission Inquiry Form</CardTitle>
+</CardHeader>
+
+<CardContent className="p-8">
+
+<form onSubmit={handleSubmit} className="space-y-8">
+
+<div className="grid md:grid-cols-2 gap-x-6 gap-y-10">
+
+{/* Student Name */}
+
+<div className="space-y-1">
+
+<Label>Student Name *</Label>
+
+<Input
+name="studentName"
+value={formData.studentName}
+onChange={handleChange}
+placeholder="ENTER STUDENT NAME"
+className="uppercase h-12"
+required
+/>
+
+</div>
+
+{/* Class Applied */}
+
+<div className="space-y-1">
+
+<Label>Class Applied For *</Label>
+
+<Select
+value={formData.classApplied}
+onValueChange={(v)=>handleSelect("classApplied",v)}
+>
+
+<SelectTrigger className="h-12">
+<SelectValue placeholder="Select class applied for"/>
+</SelectTrigger>
+
+<SelectContent>
+
+{classes.map(c=>(
+<SelectItem key={c} value={c}>{c}</SelectItem>
+))}
+
+</SelectContent>
+
+</Select>
+
+</div>
+
+{/* Previous Class */}
+
+<div className="space-y-1">
+
+<Label>Previous Class *</Label>
+
+<Select
+value={formData.previousClass}
+onValueChange={(v)=>handleSelect("previousClass",v)}
+>
+
+<SelectTrigger className="h-12">
+<SelectValue placeholder="Select previous class"/>
+</SelectTrigger>
+
+<SelectContent>
+
+{getPreviousClasses().map(c=>(
+<SelectItem key={c} value={c}>{c}</SelectItem>
+))}
+
+</SelectContent>
+
+</Select>
+
+</div>
+
+{/* Previous School */}
+
+<div className="space-y-1">
+
+<Label>Previous School</Label>
+
+<Input
+name="previousSchool"
+value={formData.previousSchool}
+onChange={handleChange}
+placeholder="ENTER PREVIOUS SCHOOL NAME"
+className="uppercase h-12"
+/>
+
+</div>
+
+{/* Father */}
+
+<div className="space-y-1">
+
+<Label>Father's Name *</Label>
+
+<Input
+name="fatherName"
+value={formData.fatherName}
+onChange={handleChange}
+placeholder="ENTER FATHER'S NAME"
+className="uppercase h-12"
+required
+/>
+
+</div>
+
+{/* Mother */}
+
+<div className="space-y-1">
+
+<Label>Mother's Name *</Label>
+
+<Input
+name="motherName"
+value={formData.motherName}
+onChange={handleChange}
+placeholder="ENTER MOTHER'S NAME"
+className="uppercase h-12"
+required
+/>
+
+</div>
+
+{/* Primary Phone */}
+
+<div className="space-y-1">
+
+<Label>Primary Contact Number *</Label>
+
+<Input
+name="primaryContact"
+value={formData.primaryContact}
+onChange={handleChange}
+placeholder="98765 43210"
+className="h-12"
+required
+/>
+
+</div>
+
+{/* Secondary Phone */}
+
+<div className="space-y-1">
+
+<Label>Secondary Contact Number</Label>
+
+<Input
+name="secondaryContact"
+value={formData.secondaryContact}
+onChange={handleChange}
+placeholder="98765 43210"
+className="h-12"
+/>
+
+</div>
+
+{/* Location */}
+
+<div className="md:col-span-2 space-y-1">
+
+<Label>Location / Address *</Label>
+
+<Input
+name="location"
+value={formData.location}
+onChange={handleChange}
+placeholder="ENTER YOUR LOCATION / ADDRESS"
+className="uppercase h-12"
+required
+/>
+
+</div>
+
+</div>
+
+{/* Additional */}
+
+<div className="space-y-1">
+
+<Label>Additional Information</Label>
+
+<Textarea
+name="additionalInfo"
+value={formData.additionalInfo}
+onChange={handleChange}
+rows={4}
+placeholder="Any additional information you'd like to share"
+/>
+
+</div>
+
+<Button
+type="submit"
+className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg"
+>
+
+Submit Admission Inquiry
+
+</Button>
+
+</form>
+
+</CardContent>
+
+</Card>
+
+</section>
+
+)
+
+}
+
+export default AdmissionForm
+```
