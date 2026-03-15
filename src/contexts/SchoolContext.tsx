@@ -168,4 +168,3 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
     </SchoolContext.Provider>
   )
 }
-```
