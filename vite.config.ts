@@ -18,15 +18,14 @@ export default defineConfig(({ mode }) => ({
 
     Sitemap({
       hostname: "https://prerakaschools.netlify.app",
-      outDir: "dist",                 // ⭐ important fix
-      generateRobotsTxt: true,       // generate robots.txt safely
+      outDir: "./dist",     // FIX: ensure correct folder path
+      generateRobotsTxt: true,
       dynamicRoutes: [
         "/",
         "/about",
-        "/contact"
+        "/contact",
       ],
     }),
-
   ],
 
   resolve: {
@@ -37,7 +36,7 @@ export default defineConfig(({ mode }) => ({
 
   build: {
     outDir: "dist",
-    emptyOutDir: true,               // ensures dist exists
+    emptyOutDir: true,
     minify: "esbuild",
     sourcemap: mode === "development",
   },
