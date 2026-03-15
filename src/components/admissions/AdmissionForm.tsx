@@ -1,88 +1,141 @@
-import { useEffect,useState } from "react";
-import { collection,getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import * as XLSX from "xlsx";
+import { useState } from "react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
-const Admissions = ()=>{
+const AdmissionForm = () => {
 
-const [data,setData]=useState<any[]>([]);
+const [form,setForm]=useState({
+studentName:"",
+classApplied:"",
+previousClass:"",
+fatherName:"",
+motherName:"",
+primaryContact:"",
+location:""
+});
 
-const load=async()=>{
-
-const snap=await getDocs(collection(db,"admissions"));
-
-setData(
-snap.docs.map(d=>({
-id:d.id,
-...d.data()
-}))
-);
-
+const handleChange=(e)=>{
+setForm({
+...form,
+[e.target.name]:e.target.value
+});
 };
 
-useEffect(()=>{
-load();
-},[]);
+const handleSubmit=async(e)=>{
 
-const exportExcel=()=>{
+e.preventDefault();
 
-const sheet=XLSX.utils.json_to_sheet(data);
+try{
 
-const book=XLSX.utils.book_new();
+await addDoc(collection(db,"admissions"),{
+...form,
+createdAt:serverTimestamp()
+});
 
-XLSX.utils.book_append_sheet(book,sheet,"Admissions");
+alert("Admission submitted successfully");
 
-XLSX.writeFile(book,"Admissions.xlsx");
+setForm({
+studentName:"",
+classApplied:"",
+previousClass:"",
+fatherName:"",
+motherName:"",
+primaryContact:"",
+location:""
+});
+
+}catch(err){
+console.error(err);
+alert("Error submitting form");
+}
 
 };
 
 return(
 
-<div>
+<div className="max-w-xl mx-auto p-4">
 
-<h2 className="text-xl font-bold">
-Admissions
+<h2 className="text-2xl font-bold mb-4">
+Student Admission Form
 </h2>
 
-<button onClick={exportExcel}>
-Export Excel
+<form onSubmit={handleSubmit} className="space-y-3">
+
+<input
+type="text"
+name="studentName"
+placeholder="Student Name"
+value={form.studentName}
+onChange={handleChange}
+required
+className="border p-2 w-full"
+/>
+
+<input
+type="text"
+name="classApplied"
+placeholder="Class Applying For"
+value={form.classApplied}
+onChange={handleChange}
+required
+className="border p-2 w-full"
+/>
+
+<input
+type="text"
+name="previousClass"
+placeholder="Previous Class"
+value={form.previousClass}
+onChange={handleChange}
+className="border p-2 w-full"
+/>
+
+<input
+type="text"
+name="fatherName"
+placeholder="Father Name"
+value={form.fatherName}
+onChange={handleChange}
+required
+className="border p-2 w-full"
+/>
+
+<input
+type="text"
+name="motherName"
+placeholder="Mother Name"
+value={form.motherName}
+onChange={handleChange}
+className="border p-2 w-full"
+/>
+
+<input
+type="tel"
+name="primaryContact"
+placeholder="Phone Number"
+value={form.primaryContact}
+onChange={handleChange}
+required
+className="border p-2 w-full"
+/>
+
+<input
+type="text"
+name="location"
+placeholder="Location"
+value={form.location}
+onChange={handleChange}
+className="border p-2 w-full"
+/>
+
+<button
+type="submit"
+className="bg-blue-600 text-white px-4 py-2"
+>
+Submit Admission
 </button>
 
-<table border={1}>
-
-<thead>
-
-<tr>
-<th>Student</th>
-<th>Class</th>
-<th>Previous</th>
-<th>Father</th>
-<th>Mother</th>
-<th>Phone</th>
-<th>Location</th>
-</tr>
-
-</thead>
-
-<tbody>
-
-{data.map(a=>(
-<tr key={a.id}>
-
-<td>{a.studentName}</td>
-<td>{a.classApplied}</td>
-<td>{a.previousClass}</td>
-<td>{a.fatherName}</td>
-<td>{a.motherName}</td>
-<td>{a.primaryContact}</td>
-<td>{a.location}</td>
-
-</tr>
-))}
-
-</tbody>
-
-</table>
+</form>
 
 </div>
 
@@ -90,4 +143,4 @@ Export Excel
 
 };
 
-export default Admissions;
+export default AdmissionForm;
