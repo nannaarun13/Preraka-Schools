@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { subscribeToSchoolData, updateSchoolData } from "../utils/schoolDataUtils"
