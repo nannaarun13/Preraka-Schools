@@ -1,231 +1,153 @@
-import React, { createContext, useContext, useReducer, useEffect, useRef } from "react";
-import { Loader2 } from "lucide-react";
-import type { Unsubscribe } from "firebase/firestore";
-import { subscribeToSchoolData, updateSchoolData } from "../utils/schoolDataUtils";
+
+import React, { createContext, useContext, useReducer, useEffect } from "react"
+import { Loader2 } from "lucide-react"
+import { subscribeToSchoolData, updateSchoolData } from "../utils/schoolDataUtils"
 
 /* ---------------- TYPES ---------------- */
 
-export interface NavigationItem {
-  name: string;
-  path: string;
-  visible: boolean;
-}
-
-export interface GalleryImage {
-  id: string;
-  url: string;
-  altText: string;
-  caption: string;
-  category: string;
-  date: string;
-}
-
-export interface Notice {
-  id: string;
-  title: string;
-  content: string;
-  date: string;
-}
-
-export interface ContactInfo {
-  address: string;
-  phone: string;
-  email: string;
-  contactNumbers: Array<{ id: string; number: string }>;
-  location: {
-    latitude: number;
-    longitude: number;
-  };
-}
-
 export interface SchoolData {
-  schoolName: string;
-  schoolLogo: string;
-  email: string;
-  phone: string;
-  address: string;
-  navigationItems: NavigationItem[];
-  galleryImages: GalleryImage[];
-  notices: Notice[];
-  welcomeMessage: string;
-  contactInfo: ContactInfo;
+  schoolName: string
+  schoolLogo: string
+  welcomeMessage: string
+  email: string
+  phone: string
+  address: string
 }
 
-export interface SchoolState {
-  data: SchoolData;
-  loading: boolean;
+interface SchoolState {
+  data: SchoolData
+  loading: boolean
 }
+
+type SchoolAction =
+  | { type: "SET_DATA"; payload: SchoolData }
+  | { type: "UPDATE_DATA"; payload: Partial<SchoolData> }
 
 /* ---------------- DEFAULT DATA ---------------- */
 
-const defaultContactInfo: ContactInfo = {
-  address: "Raghavendra Nagar, Turkayamjal, Hyderabad",
-  phone: "+91 9876543210",
-  email: "info@school.edu",
-  contactNumbers: [{ id: "1", number: "+91 9876543210" }],
-  location: {
-    latitude: 17.272058,
-    longitude: 78.588692,
-  },
-};
-
-export const defaultSchoolData: SchoolData = {
+const defaultSchoolData: SchoolData = {
   schoolName: "Preraka Schools",
   schoolLogo: "",
+  welcomeMessage: "Welcome to Preraka Schools",
   email: "info@school.edu",
   phone: "+91 9876543210",
-  address: "",
-  navigationItems: [
-    { name: "Home", path: "/", visible: true },
-    { name: "About", path: "/about", visible: true },
-    { name: "Admissions", path: "/admissions", visible: true },
-    { name: "Gallery", path: "/gallery", visible: true },
-    { name: "Notice Board", path: "/notice-board", visible: true },
-    { name: "Contact", path: "/contact", visible: true },
-    { name: "Login", path: "/login", visible: true }, // ✅ FIXED (added login)
-  ],
-  galleryImages: [],
-  notices: [],
-  welcomeMessage: "Welcome to Preraka Schools",
-  contactInfo: defaultContactInfo,
-};
+  address: ""
+}
 
 const initialState: SchoolState = {
   data: defaultSchoolData,
-  loading: true,
-};
-
-/* ---------------- ACTIONS ---------------- */
-
-type SchoolAction =
-  | { type: "SET_SCHOOL_DATA"; payload: SchoolData }
-  | { type: "UPDATE_SCHOOL_DATA"; payload: Partial<SchoolData> }
-  | { type: "ADD_NOTICE"; payload: Notice }
-  | { type: "DELETE_NOTICE"; payload: string };
+  loading: true
+}
 
 /* ---------------- REDUCER ---------------- */
 
 const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState => {
+
   switch (action.type) {
-    case "SET_SCHOOL_DATA":
-      return { ...state, data: action.payload, loading: false };
 
-    case "UPDATE_SCHOOL_DATA": {
-      const updatedData = { ...state.data, ...action.payload };
-
-      updateSchoolData(action.payload).catch((err) =>
-        console.error("Firestore sync failed:", err)
-      );
-
-      return { ...state, data: updatedData };
-    }
-
-    case "ADD_NOTICE": {
-      const newNotices = [...state.data.notices, action.payload];
-
-      updateSchoolData({ notices: newNotices }).catch(console.error);
-
+    case "SET_DATA":
       return {
         ...state,
-        data: { ...state.data, notices: newNotices },
-      };
-    }
+        data: action.payload,
+        loading: false
+      }
 
-    case "DELETE_NOTICE": {
-      const filteredNotices = state.data.notices.filter(
-        (n) => n.id !== action.payload
-      );
-
-      updateSchoolData({ notices: filteredNotices }).catch(console.error);
-
+    case "UPDATE_DATA":
       return {
         ...state,
-        data: { ...state.data, notices: filteredNotices },
-      };
-    }
+        data: { ...state.data, ...action.payload }
+      }
 
     default:
-      return state;
+      return state
   }
-};
+}
 
 /* ---------------- CONTEXT ---------------- */
 
 const SchoolContext = createContext<{
-  state: SchoolState;
-  dispatch: React.Dispatch<SchoolAction>;
+  state: SchoolState
+  updateData: (payload: Partial<SchoolData>) => void
 }>({
   state: initialState,
-  dispatch: () => {},
-});
+  updateData: () => {}
+})
 
 /* ---------------- HOOK ---------------- */
 
 export const useSchool = () => {
-  const context = useContext(SchoolContext);
+
+  const context = useContext(SchoolContext)
 
   if (!context) {
-    throw new Error("useSchool must be used inside SchoolContextProvider");
+    throw new Error("useSchool must be used inside SchoolProvider")
   }
 
-  return context;
-};
+  return context
+}
 
 /* ---------------- PROVIDER ---------------- */
 
-export const SchoolContextProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
+export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
+  children
 }) => {
-  const [state, dispatch] = useReducer(schoolReducer, initialState);
-  const unsubscribeRef = useRef<Unsubscribe | null>(null);
+
+  const [state, dispatch] = useReducer(schoolReducer, initialState)
 
   useEffect(() => {
-    console.log("Starting realtime Firestore listener");
 
-    unsubscribeRef.current = subscribeToSchoolData(
+    const unsubscribe = subscribeToSchoolData(
       (data) => {
-        dispatch({ type: "SET_SCHOOL_DATA", payload: data });
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("schoolData", JSON.stringify(data));
-        }
+        dispatch({
+          type: "SET_DATA",
+          payload: data
+        })
       },
       (error) => {
-        console.error("Firestore realtime error:", error);
+        console.error("Firestore error:", error)
 
-        if (typeof window !== "undefined") {
-          const cached = localStorage.getItem("schoolData");
-
-          if (cached) {
-            dispatch({
-              type: "SET_SCHOOL_DATA",
-              payload: { ...defaultSchoolData, ...JSON.parse(cached) },
-            });
-          } else {
-            dispatch({ type: "SET_SCHOOL_DATA", payload: defaultSchoolData });
-          }
-        }
+        dispatch({
+          type: "SET_DATA",
+          payload: defaultSchoolData
+        })
       }
-    );
+    )
 
-    return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-      }
-    };
-  }, []);
+    return () => unsubscribe()
+
+  }, [])
+
+  const updateData = async (payload: Partial<SchoolData>) => {
+
+    // instant UI update
+    dispatch({
+      type: "UPDATE_DATA",
+      payload
+    })
+
+    try {
+
+      await updateSchoolData(payload)
+
+    } catch (error) {
+
+      console.error("Firestore update failed:", error)
+
+    }
+  }
 
   if (state.loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white z-[999]">
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
       </div>
-    );
+    )
   }
 
   return (
-    <SchoolContext.Provider value={{ state, dispatch }}>
+    <SchoolContext.Provider value={{ state, updateData }}>
       {children}
     </SchoolContext.Provider>
-  );
-};
+  )
+}
+```
