@@ -1,42 +1,48 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSchool } from '@/contexts/SchoolContext';
-import { useToast } from '@/hooks/use-toast';
-import PhoneInput from './PhoneInput';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useSchool } from "@/contexts/SchoolContext";
+import { useToast } from "@/hooks/use-toast";
+import PhoneInput from "./PhoneInput";
 
 const AdmissionForm = () => {
   const { dispatch } = useSchool();
   const { toast } = useToast();
+
   const [formData, setFormData] = useState({
-    studentName: '',
-    classApplied: '',
-    previousClass: '',
-    previousSchool: '',
-    fatherName: '',
-    motherName: '',
-    primaryContact: '',
-    secondaryContact: '',
-    location: '',
-    additionalInfo: ''
+    studentName: "",
+    classApplied: "",
+    previousClass: "",
+    previousSchool: "",
+    fatherName: "",
+    motherName: "",
+    primaryContact: "",
+    secondaryContact: "",
+    location: "",
+    additionalInfo: "",
   });
 
   const classOptions = [
-    'NURSERY',
-    'LKG',
-    'UKG',
-    'CLASS 1',
-    'CLASS 2',
-    'CLASS 3',
-    'CLASS 4',
-    'CLASS 5',
-    'CLASS 6',
-    'CLASS 7',
-    
+    "NURSERY",
+    "LKG",
+    "UKG",
+    "CLASS 1",
+    "CLASS 2",
+    "CLASS 3",
+    "CLASS 4",
+    "CLASS 5",
+    "CLASS 6",
+    "CLASS 7",
   ];
 
   const getClassIndex = (className: string) => {
@@ -45,29 +51,18 @@ const AdmissionForm = () => {
 
   const getAvailablePreviousClasses = () => {
     if (!formData.classApplied) return classOptions;
-    
+
     const appliedIndex = getClassIndex(formData.classApplied);
-    if (appliedIndex === -1) return classOptions;
-    
-    // Return classes from NURSERY to one class below the applied class
-    // If applying for NURSERY, show NURSERY only
-    // If applying for LKG, show NURSERY to LKG
-    // If applying for CLASS 1, show NURSERY to UKG, etc.
     const maxIndex = appliedIndex === 0 ? 0 : appliedIndex - 1;
+
     return classOptions.slice(0, maxIndex + 1);
   };
 
   const formatPhoneNumber = (value: string) => {
-    // Remove all non-digits
-    const digits = value.replace(/\D/g, '');
-    
-    // If starts with 91, remove it
-    const cleanDigits = digits.startsWith('91') ? digits.slice(2) : digits;
-    
-    // Limit to 10 digits
+    const digits = value.replace(/\D/g, "");
+    const cleanDigits = digits.startsWith("91") ? digits.slice(2) : digits;
     const limitedDigits = cleanDigits.slice(0, 10);
-    
-    // Format as 99999 99999
+
     if (limitedDigits.length <= 5) {
       return limitedDigits;
     } else {
@@ -75,34 +70,38 @@ const AdmissionForm = () => {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    
-    if (['studentName', 'fatherName', 'motherName', 'location', 'previousSchool'].includes(name)) {
-      setFormData(prev => ({ ...prev, [name]: value.toUpperCase() }));
-    } else if (['primaryContact', 'secondaryContact'].includes(name)) {
+
+    if (
+      ["studentName", "fatherName", "motherName", "location", "previousSchool"].includes(
+        name
+      )
+    ) {
+      setFormData((prev) => ({ ...prev, [name]: value.toUpperCase() }));
+    } else if (["primaryContact", "secondaryContact"].includes(name)) {
       const formatted = formatPhoneNumber(value);
-      setFormData(prev => ({ ...prev, [name]: formatted }));
+      setFormData((prev) => ({ ...prev, [name]: formatted }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newData = { ...prev, [name]: value };
-      
-      // Reset previous class if class applied changes and current previous class is no longer valid
-      if (name === 'classApplied' && prev.previousClass) {
+
+      if (name === "classApplied" && prev.previousClass) {
         const appliedIndex = getClassIndex(value);
         const previousIndex = getClassIndex(prev.previousClass);
-        
-        // If previous class is equal to or higher than applied class, reset it
+
         if (previousIndex >= appliedIndex) {
-          newData.previousClass = '';
+          newData.previousClass = "";
         }
       }
-      
+
       return newData;
     });
   };
@@ -112,37 +111,28 @@ const AdmissionForm = () => {
       toast({
         title: "Validation Error",
         description: "Please select both class applied for and previous class.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return false;
     }
 
     const previousIndex = getClassIndex(formData.previousClass);
     const appliedIndex = getClassIndex(formData.classApplied);
-    
+
     if (previousIndex >= appliedIndex) {
       toast({
         title: "Validation Error",
         description: "Previous class must be lower than class applied for.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return false;
     }
 
-    if (formData.primaryContact.replace(/\s/g, '').length !== 10) {
+    if (formData.primaryContact.replace(/\s/g, "").length !== 10) {
       toast({
         title: "Validation Error",
         description: "Primary contact number must be exactly 10 digits.",
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    if (formData.secondaryContact && formData.secondaryContact.replace(/\s/g, '').length !== 10) {
-      toast({
-        title: "Validation Error",
-        description: "Secondary contact number must be exactly 10 digits.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return false;
     }
@@ -152,7 +142,7 @@ const AdmissionForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     const inquiryData = {
@@ -160,28 +150,31 @@ const AdmissionForm = () => {
       ...formData,
       presentClass: formData.previousClass,
       primaryContact: `+91 ${formData.primaryContact}`,
-      secondaryContact: formData.secondaryContact ? `+91 ${formData.secondaryContact}` : '',
-      submittedAt: new Date().toISOString()
+      secondaryContact: formData.secondaryContact
+        ? `+91 ${formData.secondaryContact}`
+        : "",
+      submittedAt: new Date().toISOString(),
     };
 
-    dispatch({ type: 'ADD_ADMISSION_INQUIRY', payload: inquiryData });
-    
+    dispatch({ type: "ADD_ADMISSION_INQUIRY", payload: inquiryData });
+
     toast({
       title: "Application Submitted",
-      description: "Your admission inquiry has been submitted successfully. We will contact you soon.",
+      description:
+        "Your admission inquiry has been submitted successfully. We will contact you soon.",
     });
 
     setFormData({
-      studentName: '',
-      classApplied: '',
-      previousClass: '',
-      previousSchool: '',
-      fatherName: '',
-      motherName: '',
-      primaryContact: '',
-      secondaryContact: '',
-      location: '',
-      additionalInfo: ''
+      studentName: "",
+      classApplied: "",
+      previousClass: "",
+      previousSchool: "",
+      fatherName: "",
+      motherName: "",
+      primaryContact: "",
+      secondaryContact: "",
+      location: "",
+      additionalInfo: "",
     });
   };
 
@@ -193,29 +186,41 @@ const AdmissionForm = () => {
             Admission Inquiry Form
           </CardTitle>
         </CardHeader>
+
         <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid md:grid-cols-2 gap-x-6 gap-y-8">
+
+              {/* Student Name */}
+              <div className="space-y-1">
                 <Label htmlFor="studentName">Student Name *</Label>
                 <Input
                   id="studentName"
                   name="studentName"
                   value={formData.studentName}
                   onChange={handleInputChange}
-                  placeholder="Enter student name"
+                  placeholder="ENTER STUDENT NAME"
                   required
-                  className="uppercase"
+                  className="uppercase h-11"
                 />
-                <p className="text-xs text-gray-500 mt-1">Automatically converted to uppercase</p>
+                <p className="text-xs text-gray-500 leading-tight">
+                  Automatically converted to uppercase
+                </p>
               </div>
-              
-              <div>
-                <Label htmlFor="classApplied">Class Applied For *</Label>
-                <Select value={formData.classApplied} onValueChange={(value) => handleSelectChange('classApplied', value)}>
-                  <SelectTrigger>
+
+              {/* Class Applied */}
+              <div className="space-y-1">
+                <Label>Class Applied For *</Label>
+                <Select
+                  value={formData.classApplied}
+                  onValueChange={(value) =>
+                    handleSelectChange("classApplied", value)
+                  }
+                >
+                  <SelectTrigger className="h-11">
                     <SelectValue placeholder="Select class applied for" />
                   </SelectTrigger>
+
                   <SelectContent>
                     {classOptions.map((className) => (
                       <SelectItem key={className} value={className}>
@@ -224,15 +229,25 @@ const AdmissionForm = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500 mt-1">Select the class you want to apply for</p>
+
+                <p className="text-xs text-gray-500">
+                  Select the class you want to apply for
+                </p>
               </div>
-              
-              <div>
-                <Label htmlFor="previousClass">Previous Class *</Label>
-                <Select value={formData.previousClass} onValueChange={(value) => handleSelectChange('previousClass', value)}>
-                  <SelectTrigger>
+
+              {/* Previous Class */}
+              <div className="space-y-1">
+                <Label>Previous Class *</Label>
+                <Select
+                  value={formData.previousClass}
+                  onValueChange={(value) =>
+                    handleSelectChange("previousClass", value)
+                  }
+                >
+                  <SelectTrigger className="h-11">
                     <SelectValue placeholder="Select previous class" />
                   </SelectTrigger>
+
                   <SelectContent>
                     {getAvailablePreviousClasses().map((className) => (
                       <SelectItem key={className} value={className}>
@@ -241,50 +256,54 @@ const AdmissionForm = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500 mt-1">Must be lower than class applied for</p>
+
+                <p className="text-xs text-gray-500">
+                  Must be lower than class applied for
+                </p>
               </div>
-              
-              <div>
-                <Label htmlFor="previousSchool">Previous School</Label>
+
+              {/* Previous School */}
+              <div className="space-y-1">
+                <Label>Previous School</Label>
                 <Input
-                  id="previousSchool"
                   name="previousSchool"
                   value={formData.previousSchool}
                   onChange={handleInputChange}
-                  placeholder="Enter previous school name"
-                  className="uppercase"
+                  placeholder="ENTER PREVIOUS SCHOOL NAME"
+                  className="uppercase h-11"
                 />
-                <p className="text-xs text-gray-500 mt-1">Optional, automatically converted to uppercase</p>
+
+                <p className="text-xs text-gray-500">
+                  Optional, automatically converted to uppercase
+                </p>
               </div>
-              
-              <div>
-                <Label htmlFor="fatherName">Father's Name *</Label>
+
+              {/* Father's Name */}
+              <div className="space-y-1">
+                <Label>Father's Name *</Label>
                 <Input
-                  id="fatherName"
                   name="fatherName"
                   value={formData.fatherName}
                   onChange={handleInputChange}
-                  placeholder="Enter father's name"
+                  placeholder="ENTER FATHER'S NAME"
                   required
-                  className="uppercase"
+                  className="uppercase h-11"
                 />
-                <p className="text-xs text-gray-500 mt-1">Automatically converted to uppercase</p>
               </div>
-              
-              <div>
-                <Label htmlFor="motherName">Mother's Name *</Label>
+
+              {/* Mother's Name */}
+              <div className="space-y-1">
+                <Label>Mother's Name *</Label>
                 <Input
-                  id="motherName"
                   name="motherName"
                   value={formData.motherName}
                   onChange={handleInputChange}
-                  placeholder="Enter mother's name"
+                  placeholder="ENTER MOTHER'S NAME"
                   required
-                  className="uppercase"
+                  className="uppercase h-11"
                 />
-                <p className="text-xs text-gray-500 mt-1">Automatically converted to uppercase</p>
               </div>
-              
+
               <PhoneInput
                 id="primaryContact"
                 name="primaryContact"
@@ -293,7 +312,7 @@ const AdmissionForm = () => {
                 label="Primary Contact Number"
                 required
               />
-              
+
               <PhoneInput
                 id="secondaryContact"
                 name="secondaryContact"
@@ -301,26 +320,25 @@ const AdmissionForm = () => {
                 onChange={handleInputChange}
                 label="Secondary Contact Number"
               />
-              
-              <div className="md:col-span-2">
-                <Label htmlFor="location">Location/Address *</Label>
+
+              {/* Location */}
+              <div className="md:col-span-2 space-y-1">
+                <Label>Location / Address *</Label>
                 <Input
-                  id="location"
                   name="location"
                   value={formData.location}
                   onChange={handleInputChange}
-                  placeholder="Enter your location/address"
+                  placeholder="ENTER YOUR LOCATION / ADDRESS"
                   required
-                  className="uppercase"
+                  className="uppercase h-11"
                 />
-                <p className="text-xs text-gray-500 mt-1">Automatically converted to uppercase</p>
               </div>
             </div>
-            
-            <div>
-              <Label htmlFor="additionalInfo">Additional Information</Label>
+
+            {/* Additional Info */}
+            <div className="space-y-1">
+              <Label>Additional Information</Label>
               <Textarea
-                id="additionalInfo"
                 name="additionalInfo"
                 value={formData.additionalInfo}
                 onChange={handleInputChange}
@@ -329,8 +347,8 @@ const AdmissionForm = () => {
               />
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-school-blue hover:bg-school-blue/90 text-white py-3 text-lg"
             >
               Submit Admission Inquiry
