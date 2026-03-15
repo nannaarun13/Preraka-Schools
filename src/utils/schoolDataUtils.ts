@@ -1,4 +1,4 @@
-import { 
+import {
   doc,
   getDoc,
   setDoc,
@@ -9,50 +9,66 @@ import {
 import { db } from "@/lib/firebase";
 import { SchoolData, defaultSchoolData } from "@/contexts/SchoolContext";
 
+/* ---------------- FIRESTORE DOC ---------------- */
+
 const schoolConfigRef = () => doc(db, "school", "config");
 
-// Remove undefined values before sending to Firestore
+/* ---------------- CLEAN DATA ---------------- */
+
 const cleanData = (data: any) => {
   const cleaned: any = {};
+
   Object.keys(data).forEach((key) => {
     if (data[key] !== undefined) {
       cleaned[key] = data[key];
     }
   });
+
   return cleaned;
 };
 
-// Get school data
+/* ---------------- GET SCHOOL DATA ---------------- */
+
 export const getSchoolData = async (): Promise<SchoolData> => {
+
   try {
+
     const docSnap = await getDoc(schoolConfigRef());
 
     if (docSnap.exists()) {
-      const data = { ...defaultSchoolData, ...docSnap.data() } as SchoolData;
+
+      const data = {
+        ...defaultSchoolData,
+        ...docSnap.data()
+      } as SchoolData;
+
+      /* cache minimal fields only */
 
       localStorage.setItem(
         "schoolData",
         JSON.stringify({
           schoolName: data.schoolName,
-          aboutContent: data.aboutContent,
-          latestUpdates: data.latestUpdates
+          aboutContent: data.aboutContent
         })
       );
 
       return data;
-    } else {
-      localStorage.setItem("schoolData", JSON.stringify(defaultSchoolData));
-      return defaultSchoolData;
     }
 
+    return defaultSchoolData;
+
   } catch (error) {
+
     console.error("Error fetching school data:", error);
 
     const cached = localStorage.getItem("schoolData");
 
     if (cached) {
       try {
-        return { ...defaultSchoolData, ...JSON.parse(cached) };
+        return {
+          ...defaultSchoolData,
+          ...JSON.parse(cached)
+        };
       } catch {
         return defaultSchoolData;
       }
@@ -62,7 +78,8 @@ export const getSchoolData = async (): Promise<SchoolData> => {
   }
 };
 
-// Update school data
+/* ---------------- UPDATE SCHOOL DATA ---------------- */
+
 export const updateSchoolData = async (
   data: Partial<SchoolData>
 ): Promise<void> => {
@@ -70,42 +87,39 @@ export const updateSchoolData = async (
   const safeData = cleanData(data);
 
   try {
-    await setDoc(schoolConfigRef(), safeData, { merge: true });
 
-    const cache = localStorage.getItem("schoolData");
-    const cachedData = cache ? JSON.parse(cache) : defaultSchoolData;
-
-    const updated = { ...cachedData, ...safeData };
-
-    localStorage.setItem(
-      "schoolData",
-      JSON.stringify({
-        schoolName: updated.schoolName,
-        aboutContent: updated.aboutContent,
-        latestUpdates: updated.latestUpdates
-      })
+    await setDoc(
+      schoolConfigRef(),
+      safeData,
+      { merge: true }
     );
 
-    console.log("School data updated successfully");
+    console.log("Firestore update successful");
 
   } catch (error) {
 
     console.error("Update failed, saving to queue:", error);
 
-    const pending = JSON.parse(localStorage.getItem("pendingUpdates") || "[]");
+    const pending = JSON.parse(
+      localStorage.getItem("pendingUpdates") || "[]"
+    );
 
     pending.push({
       data: safeData,
       timestamp: Date.now()
     });
 
-    localStorage.setItem("pendingUpdates", JSON.stringify(pending));
+    localStorage.setItem(
+      "pendingUpdates",
+      JSON.stringify(pending)
+    );
 
     throw error;
   }
 };
 
-// Retry queued updates
+/* ---------------- PROCESS PENDING UPDATES ---------------- */
+
 export const processPendingUpdates = async (): Promise<void> => {
 
   const pendingRaw = localStorage.getItem("pendingUpdates");
@@ -137,18 +151,21 @@ export const processPendingUpdates = async (): Promise<void> => {
       console.error("Pending update failed:", error);
 
       remaining.push(item);
-
     }
   }
 
   if (remaining.length) {
-    localStorage.setItem("pendingUpdates", JSON.stringify(remaining));
+    localStorage.setItem(
+      "pendingUpdates",
+      JSON.stringify(remaining)
+    );
   } else {
     localStorage.removeItem("pendingUpdates");
   }
 };
 
-// Realtime listener
+/* ---------------- REALTIME LISTENER ---------------- */
+
 export const subscribeToSchoolData = (
   callback: (data: SchoolData) => void,
   onError?: (error: Error) => void
@@ -159,34 +176,31 @@ export const subscribeToSchoolData = (
 
     (docSnap) => {
 
-      if (docSnap.exists()) {
+      if (!docSnap.exists()) {
 
-        const data = {
-          ...defaultSchoolData,
-          ...docSnap.data()
-        } as SchoolData;
-
-        localStorage.setItem(
-          "schoolData",
-          JSON.stringify({
-            schoolName: data.schoolName,
-            aboutContent: data.aboutContent,
-            latestUpdates: data.latestUpdates
-          })
-        );
-
-        callback(data);
-
-        setTimeout(() => {
-          processPendingUpdates().catch(console.error);
-        }, 2000);
-
-      } else {
-
-        console.warn("School config document not found. Using defaults.");
+        console.warn("School config missing. Using defaults.");
 
         callback(defaultSchoolData);
+
+        return;
       }
+
+      const data = {
+        ...defaultSchoolData,
+        ...docSnap.data()
+      } as SchoolData;
+
+      /* cache minimal fields */
+
+      localStorage.setItem(
+        "schoolData",
+        JSON.stringify({
+          schoolName: data.schoolName,
+          aboutContent: data.aboutContent
+        })
+      );
+
+      callback(data);
     },
 
     (error) => {
@@ -198,16 +212,19 @@ export const subscribeToSchoolData = (
       if (cached) {
 
         try {
+
           callback({
             ...defaultSchoolData,
             ...JSON.parse(cached)
           });
 
         } catch {
+
           callback(defaultSchoolData);
         }
 
       } else {
+
         callback(defaultSchoolData);
       }
 
@@ -215,3 +232,4 @@ export const subscribeToSchoolData = (
     }
   );
 };
+```
