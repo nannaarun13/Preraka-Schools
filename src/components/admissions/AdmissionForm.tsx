@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,17 +17,17 @@ const AdmissionForm = () => {
 
 const { toast } = useToast();
 
-const [formData, setFormData] = useState({
-  studentName:"",
-  classApplied:"",
-  previousClass:"",
-  previousSchool:"",
-  fatherName:"",
-  motherName:"",
-  primaryContact:"",
-  secondaryContact:"",
-  location:"",
-  additionalInfo:""
+const [formData,setFormData] = useState({
+studentName:"",
+classApplied:"",
+previousClass:"",
+previousSchool:"",
+fatherName:"",
+motherName:"",
+primaryContact:"",
+secondaryContact:"",
+location:"",
+additionalInfo:""
 });
 
 const classes = [
@@ -58,18 +58,23 @@ return digits.slice(0,5) + " " + digits.slice(5);
 return digits;
 };
 
-const handleChange = (e:any) => {
+const handleChange = (e:any)=>{
 
 const {name,value} = e.target;
 
 if(name==="primaryContact" || name==="secondaryContact"){
-const formatted = formatPhone(value);
-setFormData(prev=>({...prev,[name]:formatted}));
+setFormData(prev=>({
+...prev,
+[name]:formatPhone(value)
+}));
 return;
 }
 
 if(["studentName","fatherName","motherName","location","previousSchool"].includes(name)){
-setFormData(prev=>({...prev,[name]:value.toUpperCase()}));
+setFormData(prev=>({
+...prev,
+[name]:value.toUpperCase()
+}));
 return;
 }
 
@@ -83,17 +88,18 @@ setFormData(prev=>({...prev,[name]:value}));
 
 const validateForm = ()=>{
 
-if(!formData.studentName ||
+if(
+!formData.studentName ||
 !formData.classApplied ||
 !formData.previousClass ||
 !formData.fatherName ||
 !formData.motherName ||
 !formData.primaryContact ||
-!formData.location){
-
+!formData.location
+){
 toast({
-title:"Validation Error",
-description:"Please fill all required fields marked with *",
+title:"Fill Required Fields",
+description:"All * fields are mandatory",
 variant:"destructive"
 });
 return false;
@@ -103,8 +109,8 @@ const phone = formData.primaryContact.replace(/\s/g,"");
 
 if(phone.length !== 10){
 toast({
-title:"Invalid Phone Number",
-description:"Primary contact number must be exactly 10 digits",
+title:"Invalid Mobile Number",
+description:"Mobile number must be 10 digits",
 variant:"destructive"
 });
 return false;
@@ -120,9 +126,19 @@ e.preventDefault();
 
 if(!validateForm()) return;
 
+const finalData = {
+...formData,
+primaryContact:"+91 "+formData.primaryContact,
+secondaryContact:formData.secondaryContact
+? "+91 "+formData.secondaryContact
+:""
+};
+
+console.log(finalData);
+
 toast({
 title:"Admission Submitted",
-description:"Your admission inquiry has been submitted successfully."
+description:"We will contact you soon."
 });
 
 setFormData({
@@ -154,9 +170,7 @@ return(
 
 <form onSubmit={handleSubmit} className="space-y-8">
 
-<div className="grid md:grid-cols-2 gap-x-6 gap-y-10">
-
-{/* Student Name */}
+<div className="grid md:grid-cols-2 gap-x-6 gap-y-8">
 
 <div className="space-y-1">
 
@@ -171,13 +185,7 @@ className="uppercase h-12"
 required
 />
 
-<p className="text-[11px] text-gray-500 mt-1">
-Automatically converted to uppercase
-</p>
-
 </div>
-
-{/* Class Applied */}
 
 <div className="space-y-1">
 
@@ -189,7 +197,7 @@ onValueChange={(v)=>handleSelect("classApplied",v)}
 >
 
 <SelectTrigger className="h-12">
-<SelectValue placeholder="Select class applied for"/>
+<SelectValue placeholder="Select class"/>
 </SelectTrigger>
 
 <SelectContent>
@@ -201,8 +209,6 @@ onValueChange={(v)=>handleSelect("classApplied",v)}
 </Select>
 
 </div>
-
-{/* Previous Class */}
 
 <div className="space-y-1">
 
@@ -227,8 +233,6 @@ onValueChange={(v)=>handleSelect("previousClass",v)}
 
 </div>
 
-{/* Previous School */}
-
 <div className="space-y-1">
 
 <Label>Previous School</Label>
@@ -237,13 +241,11 @@ onValueChange={(v)=>handleSelect("previousClass",v)}
 name="previousSchool"
 value={formData.previousSchool}
 onChange={handleChange}
-placeholder="ENTER PREVIOUS SCHOOL NAME"
+placeholder="ENTER PREVIOUS SCHOOL"
 className="uppercase h-12"
 />
 
 </div>
-
-{/* Father */}
 
 <div className="space-y-1">
 
@@ -253,14 +255,12 @@ className="uppercase h-12"
 name="fatherName"
 value={formData.fatherName}
 onChange={handleChange}
-placeholder="ENTER FATHER'S NAME"
+placeholder="ENTER FATHER NAME"
 className="uppercase h-12"
 required
 />
 
 </div>
-
-{/* Mother */}
 
 <div className="space-y-1">
 
@@ -270,51 +270,59 @@ required
 name="motherName"
 value={formData.motherName}
 onChange={handleChange}
-placeholder="ENTER MOTHER'S NAME"
+placeholder="ENTER MOTHER NAME"
 className="uppercase h-12"
 required
 />
 
 </div>
 
-{/* Primary Phone */}
-
 <div className="space-y-1">
 
-<Label>Primary Contact Number *</Label>
+<Label>Primary Contact *</Label>
 
-<Input
+<div className="flex items-center border rounded-md h-12">
+
+<span className="px-3 bg-gray-100 border-r text-sm font-medium">
++91
+</span>
+
+<input
+type="text"
 name="primaryContact"
 value={formData.primaryContact}
 onChange={handleChange}
+className="flex-1 px-3 outline-none"
 placeholder="98765 43210"
-className="h-12"
 required
 />
 
-<p className="text-[11px] text-gray-500">
-Enter 10 digit mobile number
-</p>
+</div>
 
 </div>
 
-{/* Secondary Phone */}
-
 <div className="space-y-1">
 
-<Label>Secondary Contact Number</Label>
+<Label>Secondary Contact</Label>
 
-<Input
+<div className="flex items-center border rounded-md h-12">
+
+<span className="px-3 bg-gray-100 border-r text-sm font-medium">
++91
+</span>
+
+<input
+type="text"
 name="secondaryContact"
 value={formData.secondaryContact}
 onChange={handleChange}
+className="flex-1 px-3 outline-none"
 placeholder="98765 43210"
-className="h-12"
 />
 
 </div>
 
-{/* Location */}
+</div>
 
 <div className="md:col-span-2 space-y-1">
 
@@ -324,7 +332,7 @@ className="h-12"
 name="location"
 value={formData.location}
 onChange={handleChange}
-placeholder="ENTER YOUR LOCATION / ADDRESS"
+placeholder="ENTER LOCATION / ADDRESS"
 className="uppercase h-12"
 required
 />
@@ -332,8 +340,6 @@ required
 </div>
 
 </div>
-
-{/* Additional */}
 
 <div className="space-y-1">
 
@@ -344,7 +350,7 @@ name="additionalInfo"
 value={formData.additionalInfo}
 onChange={handleChange}
 rows={4}
-placeholder="Any additional information you'd like to share"
+placeholder="Any additional information"
 />
 
 </div>
@@ -361,6 +367,7 @@ Submit Admission Inquiry
 </form>
 
 </CardContent>
+
 </Card>
 
 </section>
