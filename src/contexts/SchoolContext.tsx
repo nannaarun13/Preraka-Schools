@@ -55,7 +55,10 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
     case "UPDATE_DATA":
       return {
         ...state,
-        data: { ...state.data, ...action.payload }
+        data: {
+          ...state.data,
+          ...action.payload
+        }
       }
 
     default:
@@ -67,10 +70,10 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
 
 const SchoolContext = createContext<{
   state: SchoolState
-  updateData: (payload: Partial<SchoolData>) => void
+  updateData: (payload: Partial<SchoolData>) => Promise<void>
 }>({
   state: initialState,
-  updateData: () => {}
+  updateData: async () => {}
 })
 
 /* ---------------- HOOK ---------------- */
@@ -94,22 +97,28 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [state, dispatch] = useReducer(schoolReducer, initialState)
 
+  /* -------- FIRESTORE REALTIME LISTENER -------- */
+
   useEffect(() => {
 
     const unsubscribe = subscribeToSchoolData(
       (data) => {
+
         dispatch({
           type: "SET_DATA",
           payload: data
         })
+
       },
       (error) => {
+
         console.error("Firestore error:", error)
 
         dispatch({
           type: "SET_DATA",
           payload: defaultSchoolData
         })
+
       }
     )
 
@@ -117,9 +126,11 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
 
   }, [])
 
+  /* -------- UPDATE FUNCTION -------- */
+
   const updateData = async (payload: Partial<SchoolData>) => {
 
-    // instant UI update
+    // Optimistic UI update
     dispatch({
       type: "UPDATE_DATA",
       payload
@@ -136,6 +147,8 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }
 
+  /* -------- LOADING SCREEN -------- */
+
   if (state.loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-white">
@@ -145,7 +158,12 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
   }
 
   return (
-    <SchoolContext.Provider value={{ state, updateData }}>
+    <SchoolContext.Provider
+      value={{
+        state,
+        updateData
+      }}
+    >
       {children}
     </SchoolContext.Provider>
   )
