@@ -31,6 +31,7 @@ const ImageUpload = ({
   const uploadToCloudinary = async (file: File) => {
 
     const formData = new FormData()
+
     formData.append("file", file)
     formData.append("upload_preset", "school_upload")
 
@@ -41,6 +42,10 @@ const ImageUpload = ({
         body: formData
       }
     )
+
+    if (!response.ok) {
+      throw new Error("Cloudinary upload failed")
+    }
 
     const data = await response.json()
 
@@ -53,7 +58,7 @@ const ImageUpload = ({
 
       toast({
         title: "Invalid File",
-        description: "Please upload a valid image file",
+        description: "Please upload an image file",
         variant: "destructive"
       })
 
@@ -66,18 +71,20 @@ const ImageUpload = ({
 
       const imageUrl = await uploadToCloudinary(file)
 
+      if (!imageUrl) throw new Error("No URL returned")
+
       setPreview(imageUrl)
 
       onImageUpload(imageUrl)
 
       toast({
-        title: "Image Uploaded",
-        description: "Image uploaded successfully"
+        title: "Upload Successful",
+        description: "Image uploaded to Cloudinary"
       })
 
     } catch (error) {
 
-      console.error(error)
+      console.error("Upload error:", error)
 
       toast({
         title: "Upload Failed",
@@ -85,9 +92,11 @@ const ImageUpload = ({
         variant: "destructive"
       })
 
-    }
+    } finally {
 
-    setUploading(false)
+      setUploading(false)
+
+    }
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -107,10 +116,11 @@ const ImageUpload = ({
     e.preventDefault()
     e.stopPropagation()
 
-    if (e.type === "dragenter" || e.type === "dragover")
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true)
-    else
+    } else {
       setDragActive(false)
+    }
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,7 +135,9 @@ const ImageUpload = ({
     setPreview("")
     onImageUpload("")
 
-    if (fileInputRef.current) fileInputRef.current.value = ""
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
 
   return (
@@ -175,7 +187,7 @@ const ImageUpload = ({
           )}
 
           <p className="text-gray-600">
-            Drag and drop an image here, or click to select
+            Drag & drop an image here, or click to select
           </p>
 
           <Button type="button" variant="outline" className="mt-2">
