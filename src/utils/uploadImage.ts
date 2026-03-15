@@ -1,4 +1,3 @@
-```ts
 export const uploadImage = async (file: File) => {
 
   const formData = new FormData()
