@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -191,7 +192,6 @@ const AdmissionForm = () => {
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid md:grid-cols-2 gap-x-6 gap-y-8">
 
-              {/* Student Name */}
               <div className="space-y-1">
                 <Label htmlFor="studentName">Student Name *</Label>
                 <Input
@@ -203,12 +203,8 @@ const AdmissionForm = () => {
                   required
                   className="uppercase h-11"
                 />
-                <p className="text-xs text-gray-500 leading-tight">
-                  Automatically converted to uppercase
-                </p>
               </div>
 
-              {/* Class Applied */}
               <div className="space-y-1">
                 <Label>Class Applied For *</Label>
                 <Select
@@ -229,13 +225,8 @@ const AdmissionForm = () => {
                     ))}
                   </SelectContent>
                 </Select>
-
-                <p className="text-xs text-gray-500">
-                  Select the class you want to apply for
-                </p>
               </div>
 
-              {/* Previous Class */}
               <div className="space-y-1">
                 <Label>Previous Class *</Label>
                 <Select
@@ -256,13 +247,8 @@ const AdmissionForm = () => {
                     ))}
                   </SelectContent>
                 </Select>
-
-                <p className="text-xs text-gray-500">
-                  Must be lower than class applied for
-                </p>
               </div>
 
-              {/* Previous School */}
               <div className="space-y-1">
                 <Label>Previous School</Label>
                 <Input
@@ -272,13 +258,8 @@ const AdmissionForm = () => {
                   placeholder="ENTER PREVIOUS SCHOOL NAME"
                   className="uppercase h-11"
                 />
-
-                <p className="text-xs text-gray-500">
-                  Optional, automatically converted to uppercase
-                </p>
               </div>
 
-              {/* Father's Name */}
               <div className="space-y-1">
                 <Label>Father's Name *</Label>
                 <Input
@@ -291,7 +272,6 @@ const AdmissionForm = () => {
                 />
               </div>
 
-              {/* Mother's Name */}
               <div className="space-y-1">
                 <Label>Mother's Name *</Label>
                 <Input
@@ -321,7 +301,6 @@ const AdmissionForm = () => {
                 label="Secondary Contact Number"
               />
 
-              {/* Location */}
               <div className="md:col-span-2 space-y-1">
                 <Label>Location / Address *</Label>
                 <Input
@@ -335,7 +314,6 @@ const AdmissionForm = () => {
               </div>
             </div>
 
-            {/* Additional Info */}
             <div className="space-y-1">
               <Label>Additional Information</Label>
               <Textarea
@@ -361,3 +339,4 @@ const AdmissionForm = () => {
 };
 
 export default AdmissionForm;
+```
