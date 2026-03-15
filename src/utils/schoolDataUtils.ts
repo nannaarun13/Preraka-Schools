@@ -1,10 +1,11 @@
 import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  onSnapshot, 
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot,
   Unsubscribe
 } from "firebase/firestore";
+
 import { db } from "@/lib/firebase";
 import { SchoolData, defaultSchoolData } from "@/contexts/SchoolContext";
 
@@ -21,6 +22,7 @@ const cleanData = (data: any) => {
   return cleaned;
 };
 
+// Get school data
 export const getSchoolData = async (): Promise<SchoolData> => {
   try {
     const docSnap = await getDoc(schoolConfigRef());
@@ -28,7 +30,6 @@ export const getSchoolData = async (): Promise<SchoolData> => {
     if (docSnap.exists()) {
       const data = { ...defaultSchoolData, ...docSnap.data() } as SchoolData;
 
-      // Avoid storing huge objects in localStorage
       localStorage.setItem(
         "schoolData",
         JSON.stringify({
@@ -43,13 +44,15 @@ export const getSchoolData = async (): Promise<SchoolData> => {
       localStorage.setItem("schoolData", JSON.stringify(defaultSchoolData));
       return defaultSchoolData;
     }
+
   } catch (error) {
     console.error("Error fetching school data:", error);
 
-    const cachedData = localStorage.getItem("schoolData");
-    if (cachedData) {
+    const cached = localStorage.getItem("schoolData");
+
+    if (cached) {
       try {
-        return { ...defaultSchoolData, ...JSON.parse(cachedData) };
+        return { ...defaultSchoolData, ...JSON.parse(cached) };
       } catch {
         return defaultSchoolData;
       }
@@ -59,46 +62,109 @@ export const getSchoolData = async (): Promise<SchoolData> => {
   }
 };
 
+// Update school data
 export const updateSchoolData = async (
   data: Partial<SchoolData>
 ): Promise<void> => {
-  try {
-    const safeData = cleanData(data);
 
+  const safeData = cleanData(data);
+
+  try {
     await setDoc(schoolConfigRef(), safeData, { merge: true });
 
-    const currentCache = localStorage.getItem("schoolData");
-    const cachedData = currentCache
-      ? JSON.parse(currentCache)
-      : defaultSchoolData;
+    const cache = localStorage.getItem("schoolData");
+    const cachedData = cache ? JSON.parse(cache) : defaultSchoolData;
 
-    const updatedCache = { ...cachedData, ...safeData };
+    const updated = { ...cachedData, ...safeData };
 
     localStorage.setItem(
       "schoolData",
       JSON.stringify({
-        schoolName: updatedCache.schoolName,
-        aboutContent: updatedCache.aboutContent,
-        latestUpdates: updatedCache.latestUpdates
+        schoolName: updated.schoolName,
+        aboutContent: updated.aboutContent,
+        latestUpdates: updated.latestUpdates
       })
     );
 
     console.log("School data updated successfully");
+
   } catch (error) {
-    console.error("Failed to update school data:", error);
+
+    console.error("Update failed, saving to queue:", error);
+
+    const pending = JSON.parse(localStorage.getItem("pendingUpdates") || "[]");
+
+    pending.push({
+      data: safeData,
+      timestamp: Date.now()
+    });
+
+    localStorage.setItem("pendingUpdates", JSON.stringify(pending));
+
     throw error;
   }
 };
 
+// Retry queued updates
+export const processPendingUpdates = async (): Promise<void> => {
+
+  const pendingRaw = localStorage.getItem("pendingUpdates");
+
+  if (!pendingRaw) return;
+
+  const updates = JSON.parse(pendingRaw);
+
+  if (!updates.length) return;
+
+  console.log("Processing pending updates:", updates.length);
+
+  const remaining: any[] = [];
+
+  for (const item of updates) {
+
+    try {
+
+      await setDoc(
+        schoolConfigRef(),
+        cleanData(item.data),
+        { merge: true }
+      );
+
+      console.log("Pending update synced");
+
+    } catch (error) {
+
+      console.error("Pending update failed:", error);
+
+      remaining.push(item);
+
+    }
+  }
+
+  if (remaining.length) {
+    localStorage.setItem("pendingUpdates", JSON.stringify(remaining));
+  } else {
+    localStorage.removeItem("pendingUpdates");
+  }
+};
+
+// Realtime listener
 export const subscribeToSchoolData = (
   callback: (data: SchoolData) => void,
   onError?: (error: Error) => void
 ): Unsubscribe => {
+
   return onSnapshot(
     schoolConfigRef(),
-    (doc) => {
-      if (doc.exists()) {
-        const data = { ...defaultSchoolData, ...doc.data() } as SchoolData;
+
+    (docSnap) => {
+
+      if (docSnap.exists()) {
+
+        const data = {
+          ...defaultSchoolData,
+          ...docSnap.data()
+        } as SchoolData;
 
         localStorage.setItem(
           "schoolData",
@@ -110,22 +176,37 @@ export const subscribeToSchoolData = (
         );
 
         callback(data);
+
+        setTimeout(() => {
+          processPendingUpdates().catch(console.error);
+        }, 2000);
+
       } else {
+
         console.warn("School config document not found. Using defaults.");
+
         callback(defaultSchoolData);
       }
     },
+
     (error) => {
-      console.error("Real-time subscription error:", error);
 
-      const cachedData = localStorage.getItem("schoolData");
+      console.error("Realtime subscription error:", error);
 
-      if (cachedData) {
+      const cached = localStorage.getItem("schoolData");
+
+      if (cached) {
+
         try {
-          callback({ ...defaultSchoolData, ...JSON.parse(cachedData) });
+          callback({
+            ...defaultSchoolData,
+            ...JSON.parse(cached)
+          });
+
         } catch {
           callback(defaultSchoolData);
         }
+
       } else {
         callback(defaultSchoolData);
       }
