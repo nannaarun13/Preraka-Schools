@@ -1,403 +1,363 @@
-
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
+  SelectValue,
+} from "@/components/ui/select";
+import { useSchool } from "@/contexts/SchoolContext";
+import { useToast } from "@/hooks/use-toast";
+import PhoneInput from "./PhoneInput";
 
 const AdmissionForm = () => {
-
-const { toast } = useToast()
-
-const [formData, setFormData] = useState({
-  studentName:"",
-  classApplied:"",
-  previousClass:"",
-  previousSchool:"",
-  fatherName:"",
-  motherName:"",
-  primaryContact:"",
-  secondaryContact:"",
-  location:"",
-  additionalInfo:""
-})
-
-const classes = [
-"NURSERY",
-"LKG",
-"UKG",
-"CLASS 1",
-"CLASS 2",
-"CLASS 3",
-"CLASS 4",
-"CLASS 5",
-"CLASS 6",
-"CLASS 7"
-]
-
-/* ---------------- PHONE FORMAT ---------------- */
-
-const formatPhone = (value:string) => {
-
-let digits = value.replace(/\D/g,"")
-
-if(digits.length > 10){
-digits = digits.slice(0,10)
-}
-
-if(digits.length > 5){
-return digits.slice(0,5) + " " + digits.slice(5)
-}
-
-return digits
-}
-
-/* ---------------- INPUT CHANGE ---------------- */
-
-const handleChange = (e:any) => {
-
-const {name,value} = e.target
-
-if(name==="primaryContact" || name==="secondaryContact"){
-
-const formatted = formatPhone(value)
-
-setFormData(prev=>({...prev,[name]:formatted}))
-
-return
-}
-
-if(["studentName","fatherName","motherName","location","previousSchool"].includes(name)){
-
-setFormData(prev=>({...prev,[name]:value.toUpperCase()}))
-
-return
-}
-
-setFormData(prev=>({...prev,[name]:value}))
-}
-
-/* ---------------- SELECT CHANGE ---------------- */
-
-const handleSelect = (name:string,value:string)=>{
-
-setFormData(prev=>({...prev,[name]:value, previousClass:""}))
-
-}
-
-/* ---------------- FILTER PREVIOUS CLASS ---------------- */
-
-const getPreviousClasses = () => {
-
-const index = classes.indexOf(formData.classApplied)
-
-if(index === -1) return classes
-
-return classes.slice(0,index)
-
-}
-
-/* ---------------- VALIDATION ---------------- */
-
-const validateForm = ()=>{
-
-if(!formData.studentName ||
-!formData.classApplied ||
-!formData.previousClass ||
-!formData.fatherName ||
-!formData.motherName ||
-!formData.primaryContact ||
-!formData.location){
-
-toast({
-title:"Validation Error",
-description:"Please fill all required fields marked with *",
-variant:"destructive"
-})
-
-return false
-}
-
-const phone = formData.primaryContact.replace(/\s/g,"")
-
-if(phone.length !== 10){
-
-toast({
-title:"Invalid Phone Number",
-description:"Primary contact number must be exactly 10 digits",
-variant:"destructive"
-})
-
-return false
-}
-
-return true
-}
-
-/* ---------------- SUBMIT ---------------- */
-
-const handleSubmit = (e:any)=>{
-
-e.preventDefault()
-
-if(!validateForm()) return
-
-toast({
-title:"Admission Submitted",
-description:"Your admission inquiry has been submitted successfully."
-})
-
-setFormData({
-studentName:"",
-classApplied:"",
-previousClass:"",
-previousSchool:"",
-fatherName:"",
-motherName:"",
-primaryContact:"",
-secondaryContact:"",
-location:"",
-additionalInfo:""
-})
-
-}
-
-/* ---------------- UI ---------------- */
-
-return(
-
-<section>
-
-<Card className="max-w-4xl mx-auto">
-
-<CardHeader className="bg-blue-600 text-white text-center">
-<CardTitle>Admission Inquiry Form</CardTitle>
-</CardHeader>
-
-<CardContent className="p-8">
-
-<form onSubmit={handleSubmit} className="space-y-8">
-
-<div className="grid md:grid-cols-2 gap-x-6 gap-y-10">
-
-{/* Student Name */}
-
-<div className="space-y-1">
-
-<Label>Student Name *</Label>
-
-<Input
-name="studentName"
-value={formData.studentName}
-onChange={handleChange}
-placeholder="ENTER STUDENT NAME"
-className="uppercase h-12"
-required
-/>
-
-</div>
-
-{/* Class Applied */}
-
-<div className="space-y-1">
-
-<Label>Class Applied For *</Label>
-
-<Select
-value={formData.classApplied}
-onValueChange={(v)=>handleSelect("classApplied",v)}
->
-
-<SelectTrigger className="h-12">
-<SelectValue placeholder="Select class applied for"/>
-</SelectTrigger>
-
-<SelectContent>
-
-{classes.map(c=>(
-<SelectItem key={c} value={c}>{c}</SelectItem>
-))}
-
-</SelectContent>
-
-</Select>
-
-</div>
-
-{/* Previous Class */}
-
-<div className="space-y-1">
-
-<Label>Previous Class *</Label>
-
-<Select
-value={formData.previousClass}
-onValueChange={(v)=>handleSelect("previousClass",v)}
->
-
-<SelectTrigger className="h-12">
-<SelectValue placeholder="Select previous class"/>
-</SelectTrigger>
-
-<SelectContent>
-
-{getPreviousClasses().map(c=>(
-<SelectItem key={c} value={c}>{c}</SelectItem>
-))}
-
-</SelectContent>
-
-</Select>
-
-</div>
-
-{/* Previous School */}
-
-<div className="space-y-1">
-
-<Label>Previous School</Label>
-
-<Input
-name="previousSchool"
-value={formData.previousSchool}
-onChange={handleChange}
-placeholder="ENTER PREVIOUS SCHOOL NAME"
-className="uppercase h-12"
-/>
-
-</div>
-
-{/* Father */}
-
-<div className="space-y-1">
-
-<Label>Father's Name *</Label>
-
-<Input
-name="fatherName"
-value={formData.fatherName}
-onChange={handleChange}
-placeholder="ENTER FATHER'S NAME"
-className="uppercase h-12"
-required
-/>
-
-</div>
-
-{/* Mother */}
-
-<div className="space-y-1">
-
-<Label>Mother's Name *</Label>
-
-<Input
-name="motherName"
-value={formData.motherName}
-onChange={handleChange}
-placeholder="ENTER MOTHER'S NAME"
-className="uppercase h-12"
-required
-/>
-
-</div>
-
-{/* Primary Phone */}
-
-<div className="space-y-1">
-
-<Label>Primary Contact Number *</Label>
-
-<Input
-name="primaryContact"
-value={formData.primaryContact}
-onChange={handleChange}
-placeholder="98765 43210"
-className="h-12"
-required
-/>
-
-</div>
-
-{/* Secondary Phone */}
-
-<div className="space-y-1">
-
-<Label>Secondary Contact Number</Label>
-
-<Input
-name="secondaryContact"
-value={formData.secondaryContact}
-onChange={handleChange}
-placeholder="98765 43210"
-className="h-12"
-/>
-
-</div>
-
-{/* Location */}
-
-<div className="md:col-span-2 space-y-1">
-
-<Label>Location / Address *</Label>
-
-<Input
-name="location"
-value={formData.location}
-onChange={handleChange}
-placeholder="ENTER YOUR LOCATION / ADDRESS"
-className="uppercase h-12"
-required
-/>
-
-</div>
-
-</div>
-
-{/* Additional */}
-
-<div className="space-y-1">
-
-<Label>Additional Information</Label>
-
-<Textarea
-name="additionalInfo"
-value={formData.additionalInfo}
-onChange={handleChange}
-rows={4}
-placeholder="Any additional information you'd like to share"
-/>
-
-</div>
-
-<Button
-type="submit"
-className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg"
->
-
-Submit Admission Inquiry
-
-</Button>
-
-</form>
-
-</CardContent>
-
-</Card>
-
-</section>
-
-)
-
-}
-
-export default AdmissionForm
-```
+  const { dispatch } = useSchool();
+  const { toast } = useToast();
+
+  const [formData, setFormData] = useState({
+    studentName: "",
+    classApplied: "",
+    previousClass: "",
+    previousSchool: "",
+    fatherName: "",
+    motherName: "",
+    primaryContact: "",
+    secondaryContact: "",
+    location: "",
+    additionalInfo: "",
+  });
+
+  const classOptions = [
+    "NURSERY",
+    "LKG",
+    "UKG",
+    "CLASS 1",
+    "CLASS 2",
+    "CLASS 3",
+    "CLASS 4",
+    "CLASS 5",
+    "CLASS 6",
+    "CLASS 7",
+  ];
+
+  const getClassIndex = (className: string) => {
+    return classOptions.indexOf(className);
+  };
+
+  const getAvailablePreviousClasses = () => {
+    if (!formData.classApplied) return classOptions;
+
+    const appliedIndex = getClassIndex(formData.classApplied);
+    const maxIndex = appliedIndex === 0 ? 0 : appliedIndex - 1;
+
+    return classOptions.slice(0, maxIndex + 1);
+  };
+
+  const formatPhoneNumber = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    const cleanDigits = digits.startsWith("91") ? digits.slice(2) : digits;
+    const limitedDigits = cleanDigits.slice(0, 10);
+
+    if (limitedDigits.length <= 5) {
+      return limitedDigits;
+    } else {
+      return `${limitedDigits.slice(0, 5)} ${limitedDigits.slice(5)}`;
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+
+    if (
+      ["studentName", "fatherName", "motherName", "location", "previousSchool"].includes(
+        name
+      )
+    ) {
+      setFormData((prev) => ({ ...prev, [name]: value.toUpperCase() }));
+    } else if (["primaryContact", "secondaryContact"].includes(name)) {
+      const formatted = formatPhoneNumber(value);
+      setFormData((prev) => ({ ...prev, [name]: formatted }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+
+      if (name === "classApplied" && prev.previousClass) {
+        const appliedIndex = getClassIndex(value);
+        const previousIndex = getClassIndex(prev.previousClass);
+
+        if (previousIndex >= appliedIndex) {
+          newData.previousClass = "";
+        }
+      }
+
+      return newData;
+    });
+  };
+
+  const validateForm = () => {
+    if (!formData.previousClass || !formData.classApplied) {
+      toast({
+        title: "Validation Error",
+        description: "Please select both class applied for and previous class.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    const previousIndex = getClassIndex(formData.previousClass);
+    const appliedIndex = getClassIndex(formData.classApplied);
+
+    if (previousIndex >= appliedIndex) {
+      toast({
+        title: "Validation Error",
+        description: "Previous class must be lower than class applied for.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (formData.primaryContact.replace(/\s/g, "").length !== 10) {
+      toast({
+        title: "Validation Error",
+        description: "Primary contact number must be exactly 10 digits.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    const inquiryData = {
+      id: Date.now().toString(),
+      ...formData,
+      presentClass: formData.previousClass,
+      primaryContact: `+91 ${formData.primaryContact}`,
+      secondaryContact: formData.secondaryContact
+        ? `+91 ${formData.secondaryContact}`
+        : "",
+      submittedAt: new Date().toISOString(),
+    };
+
+    dispatch({ type: "ADD_ADMISSION_INQUIRY", payload: inquiryData });
+
+    toast({
+      title: "Application Submitted",
+      description:
+        "Your admission inquiry has been submitted successfully. We will contact you soon.",
+    });
+
+    setFormData({
+      studentName: "",
+      classApplied: "",
+      previousClass: "",
+      previousSchool: "",
+      fatherName: "",
+      motherName: "",
+      primaryContact: "",
+      secondaryContact: "",
+      location: "",
+      additionalInfo: "",
+    });
+  };
+
+  return (
+    <section className="animate-fade-in">
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader className="bg-school-blue text-white rounded-t-lg">
+          <CardTitle className="text-2xl text-center">
+            Admission Inquiry Form
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid md:grid-cols-2 gap-x-6 gap-y-8">
+
+              {/* Student Name */}
+              <div className="space-y-1">
+                <Label htmlFor="studentName">Student Name *</Label>
+                <Input
+                  id="studentName"
+                  name="studentName"
+                  value={formData.studentName}
+                  onChange={handleInputChange}
+                  placeholder="ENTER STUDENT NAME"
+                  required
+                  className="uppercase h-11"
+                />
+                <p className="text-xs text-gray-500 leading-tight">
+                  Automatically converted to uppercase
+                </p>
+              </div>
+
+              {/* Class Applied */}
+              <div className="space-y-1">
+                <Label>Class Applied For *</Label>
+                <Select
+                  value={formData.classApplied}
+                  onValueChange={(value) =>
+                    handleSelectChange("classApplied", value)
+                  }
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select class applied for" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {classOptions.map((className) => (
+                      <SelectItem key={className} value={className}>
+                        {className}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <p className="text-xs text-gray-500">
+                  Select the class you want to apply for
+                </p>
+              </div>
+
+              {/* Previous Class */}
+              <div className="space-y-1">
+                <Label>Previous Class *</Label>
+                <Select
+                  value={formData.previousClass}
+                  onValueChange={(value) =>
+                    handleSelectChange("previousClass", value)
+                  }
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select previous class" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {getAvailablePreviousClasses().map((className) => (
+                      <SelectItem key={className} value={className}>
+                        {className}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <p className="text-xs text-gray-500">
+                  Must be lower than class applied for
+                </p>
+              </div>
+
+              {/* Previous School */}
+              <div className="space-y-1">
+                <Label>Previous School</Label>
+                <Input
+                  name="previousSchool"
+                  value={formData.previousSchool}
+                  onChange={handleInputChange}
+                  placeholder="ENTER PREVIOUS SCHOOL NAME"
+                  className="uppercase h-11"
+                />
+
+                <p className="text-xs text-gray-500">
+                  Optional, automatically converted to uppercase
+                </p>
+              </div>
+
+              {/* Father's Name */}
+              <div className="space-y-1">
+                <Label>Father's Name *</Label>
+                <Input
+                  name="fatherName"
+                  value={formData.fatherName}
+                  onChange={handleInputChange}
+                  placeholder="ENTER FATHER'S NAME"
+                  required
+                  className="uppercase h-11"
+                />
+              </div>
+
+              {/* Mother's Name */}
+              <div className="space-y-1">
+                <Label>Mother's Name *</Label>
+                <Input
+                  name="motherName"
+                  value={formData.motherName}
+                  onChange={handleInputChange}
+                  placeholder="ENTER MOTHER'S NAME"
+                  required
+                  className="uppercase h-11"
+                />
+              </div>
+
+              <PhoneInput
+                id="primaryContact"
+                name="primaryContact"
+                value={formData.primaryContact}
+                onChange={handleInputChange}
+                label="Primary Contact Number"
+                required
+              />
+
+              <PhoneInput
+                id="secondaryContact"
+                name="secondaryContact"
+                value={formData.secondaryContact}
+                onChange={handleInputChange}
+                label="Secondary Contact Number"
+              />
+
+              {/* Location */}
+              <div className="md:col-span-2 space-y-1">
+                <Label>Location / Address *</Label>
+                <Input
+                  name="location"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                  placeholder="ENTER YOUR LOCATION / ADDRESS"
+                  required
+                  className="uppercase h-11"
+                />
+              </div>
+            </div>
+
+            {/* Additional Info */}
+            <div className="space-y-1">
+              <Label>Additional Information</Label>
+              <Textarea
+                name="additionalInfo"
+                value={formData.additionalInfo}
+                onChange={handleInputChange}
+                rows={4}
+                placeholder="Any additional information you'd like to share"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-school-blue hover:bg-school-blue/90 text-white py-3 text-lg"
+            >
+              Submit Admission Inquiry
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </section>
+  );
+};
+
+export default AdmissionForm;
