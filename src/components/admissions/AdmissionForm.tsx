@@ -1,145 +1,166 @@
 import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db } from "@/lib/firebase";
+
+type AdmissionFormData = {
+  studentName: string;
+  classApplied: string;
+  previousClass: string;
+  fatherName: string;
+  motherName: string;
+  primaryContact: string;
+  location: string;
+};
 
 const AdmissionForm = () => {
 
-const [form,setForm]=useState({
-studentName:"",
-classApplied:"",
-previousClass:"",
-fatherName:"",
-motherName:"",
-primaryContact:"",
-location:""
-});
+  const [form, setForm] = useState<AdmissionFormData>({
+    studentName: "",
+    classApplied: "",
+    previousClass: "",
+    fatherName: "",
+    motherName: "",
+    primaryContact: "",
+    location: ""
+  });
 
-const handleChange=(e)=>{
-setForm({
-...form,
-[e.target.name]:e.target.value
-});
-};
+  const [loading, setLoading] = useState(false);
 
-const handleSubmit=async(e)=>{
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+  };
 
-e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
 
-try{
+    e.preventDefault();
 
-await addDoc(collection(db,"admissions"),{
-...form,
-createdAt:serverTimestamp()
-});
+    try {
 
-alert("Admission submitted successfully");
+      setLoading(true);
 
-setForm({
-studentName:"",
-classApplied:"",
-previousClass:"",
-fatherName:"",
-motherName:"",
-primaryContact:"",
-location:""
-});
+      await addDoc(collection(db, "admissions"), {
+        ...form,
+        createdAt: serverTimestamp()
+      });
 
-}catch(err){
-console.error(err);
-alert("Error submitting form");
-}
+      alert("Admission submitted successfully");
 
-};
+      setForm({
+        studentName: "",
+        classApplied: "",
+        previousClass: "",
+        fatherName: "",
+        motherName: "",
+        primaryContact: "",
+        location: ""
+      });
 
-return(
+    } catch (error) {
 
-<div className="max-w-xl mx-auto p-4">
+      console.error("Submission error:", error);
+      alert("Failed to submit admission");
 
-<h2 className="text-2xl font-bold mb-4">
-Student Admission Form
-</h2>
+    } finally {
 
-<form onSubmit={handleSubmit} className="space-y-3">
+      setLoading(false);
 
-<input
-type="text"
-name="studentName"
-placeholder="Student Name"
-value={form.studentName}
-onChange={handleChange}
-required
-className="border p-2 w-full"
-/>
+    }
 
-<input
-type="text"
-name="classApplied"
-placeholder="Class Applying For"
-value={form.classApplied}
-onChange={handleChange}
-required
-className="border p-2 w-full"
-/>
+  };
 
-<input
-type="text"
-name="previousClass"
-placeholder="Previous Class"
-value={form.previousClass}
-onChange={handleChange}
-className="border p-2 w-full"
-/>
+  return (
 
-<input
-type="text"
-name="fatherName"
-placeholder="Father Name"
-value={form.fatherName}
-onChange={handleChange}
-required
-className="border p-2 w-full"
-/>
+    <div className="max-w-xl mx-auto p-6">
 
-<input
-type="text"
-name="motherName"
-placeholder="Mother Name"
-value={form.motherName}
-onChange={handleChange}
-className="border p-2 w-full"
-/>
+      <h2 className="text-2xl font-bold mb-6 text-center">
+        Student Admission Form
+      </h2>
 
-<input
-type="tel"
-name="primaryContact"
-placeholder="Phone Number"
-value={form.primaryContact}
-onChange={handleChange}
-required
-className="border p-2 w-full"
-/>
+      <form onSubmit={handleSubmit} className="space-y-4">
 
-<input
-type="text"
-name="location"
-placeholder="Location"
-value={form.location}
-onChange={handleChange}
-className="border p-2 w-full"
-/>
+        <input
+          type="text"
+          name="studentName"
+          placeholder="Student Name"
+          value={form.studentName}
+          onChange={handleChange}
+          required
+          className="border p-2 w-full"
+        />
 
-<button
-type="submit"
-className="bg-blue-600 text-white px-4 py-2"
->
-Submit Admission
-</button>
+        <input
+          type="text"
+          name="classApplied"
+          placeholder="Class Applying For"
+          value={form.classApplied}
+          onChange={handleChange}
+          required
+          className="border p-2 w-full"
+        />
 
-</form>
+        <input
+          type="text"
+          name="previousClass"
+          placeholder="Previous Class"
+          value={form.previousClass}
+          onChange={handleChange}
+          className="border p-2 w-full"
+        />
 
-</div>
+        <input
+          type="text"
+          name="fatherName"
+          placeholder="Father Name"
+          value={form.fatherName}
+          onChange={handleChange}
+          required
+          className="border p-2 w-full"
+        />
 
-);
+        <input
+          type="text"
+          name="motherName"
+          placeholder="Mother Name"
+          value={form.motherName}
+          onChange={handleChange}
+          className="border p-2 w-full"
+        />
+
+        <input
+          type="tel"
+          name="primaryContact"
+          placeholder="Phone Number"
+          value={form.primaryContact}
+          onChange={handleChange}
+          required
+          className="border p-2 w-full"
+        />
+
+        <input
+          type="text"
+          name="location"
+          placeholder="Location"
+          value={form.location}
+          onChange={handleChange}
+          className="border p-2 w-full"
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 w-full"
+        >
+          {loading ? "Submitting..." : "Submit Admission"}
+        </button>
+
+      </form>
+
+    </div>
+
+  );
 
 };
 
