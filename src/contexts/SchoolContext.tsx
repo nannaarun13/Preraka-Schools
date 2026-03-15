@@ -24,7 +24,7 @@ type SchoolAction =
 
 /* ---------------- DEFAULT DATA ---------------- */
 
-const defaultSchoolData: SchoolData = {
+export const defaultSchoolData: SchoolData = {
   schoolName: "Preraka Schools",
   schoolLogo: "",
   welcomeMessage: "Welcome to Preraka Schools",
@@ -96,8 +96,6 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [state, dispatch] = useReducer(schoolReducer, initialState)
 
-  /* -------- FIRESTORE REALTIME LISTENER -------- */
-
   useEffect(() => {
 
     const unsubscribe = subscribeToSchoolData(
@@ -125,28 +123,19 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
 
   }, [])
 
-  /* -------- UPDATE FUNCTION -------- */
-
   const updateData = async (payload: Partial<SchoolData>) => {
 
-    // Optimistic UI update
     dispatch({
       type: "UPDATE_DATA",
       payload
     })
 
     try {
-
       await updateSchoolData(payload)
-
     } catch (error) {
-
       console.error("Firestore update failed:", error)
-
     }
   }
-
-  /* -------- LOADING SCREEN -------- */
 
   if (state.loading) {
     return (
