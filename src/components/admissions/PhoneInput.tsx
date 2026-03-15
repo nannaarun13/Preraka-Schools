@@ -21,7 +21,7 @@ const PhoneInput = ({
   onChange, 
   label, 
   required = false, 
-  placeholder = "9848047368",
+  placeholder = "9876543210",
   disabled = false,
   error
 }: PhoneInputProps) => {
