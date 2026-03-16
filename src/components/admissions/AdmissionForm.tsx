@@ -12,12 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSchool } from "@/contexts/SchoolContext";
 import { useToast } from "@/hooks/use-toast";
 import PhoneInput from "./PhoneInput";
 
 const AdmissionForm = () => {
-  const { dispatch } = useSchool();
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -157,7 +155,7 @@ const AdmissionForm = () => {
       submittedAt: new Date().toISOString(),
     };
 
-    dispatch({ type: "ADD_ADMISSION_INQUIRY", payload: inquiryData });
+    console.log("Admission Inquiry:", inquiryData);
 
     toast({
       title: "Application Submitted",
