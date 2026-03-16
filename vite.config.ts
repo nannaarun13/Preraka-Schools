@@ -7,21 +7,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig(({ mode }) => ({
+  // IMPORTANT: Set this to your repository name for GitHub Pages
+  base: "/Preraka-Schools/", 
+  
   server: {
     host: "::",
     port: 8080,
   },
-
-  plugins: [
-    react()
-  ],
-
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-
   build: {
     outDir: "dist",
     emptyOutDir: true,
