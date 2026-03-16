@@ -29,24 +29,24 @@ const ContentManager = () => {
     address: ""
   })
 
-  /* ---------------- SYNC WITH CONTEXT ---------------- */
+  /* ---------------- SYNC CONTEXT DATA ---------------- */
 
   useEffect(() => {
 
     if (!state?.data) return
 
     setGeneralContent({
-      schoolName: state.data.schoolName || "",
-      schoolLogo: state.data.schoolLogo || "",
-      welcomeMessage: state.data.welcomeMessage || "",
-      email: state.data.email || "",
-      phone: state.data.phone || "",
-      address: state.data.address || ""
+      schoolName: state?.data?.schoolName || "",
+      schoolLogo: state?.data?.schoolLogo || "",
+      welcomeMessage: state?.data?.welcomeMessage || "",
+      email: state?.data?.email || "",
+      phone: state?.data?.phone || "",
+      address: state?.data?.address || ""
     })
 
-  }, [state])
+  }, [state?.data])
 
-  /* ---------------- INPUT CHANGE ---------------- */
+  /* ---------------- HANDLE INPUT ---------------- */
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -54,13 +54,13 @@ const ContentManager = () => {
 
     const { name, value } = e.target
 
-    setGeneralContent(prev => ({
+    setGeneralContent((prev) => ({
       ...prev,
       [name]: value
     }))
   }
 
-  /* ---------------- SAVE ---------------- */
+  /* ---------------- SAVE DATA ---------------- */
 
   const handleSave = async () => {
 
@@ -85,9 +85,12 @@ const ContentManager = () => {
         variant: "destructive"
       })
 
+    } finally {
+
+      setIsSaving(false)
+
     }
 
-    setIsSaving(false)
   }
 
   /* ---------------- UI ---------------- */
@@ -130,12 +133,12 @@ const ContentManager = () => {
 
                   {isSaving ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin"/>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Saving...
                     </>
                   ) : (
                     <>
-                      <Save className="h-4 w-4 mr-2"/>
+                      <Save className="h-4 w-4 mr-2" />
                       Save Changes
                     </>
                   )}
@@ -154,7 +157,7 @@ const ContentManager = () => {
                 label="School Logo"
                 currentImage={generalContent.schoolLogo}
                 onImageUpload={(url) =>
-                  setGeneralContent(prev => ({
+                  setGeneralContent((prev) => ({
                     ...prev,
                     schoolLogo: url
                   }))
@@ -223,7 +226,7 @@ const ContentManager = () => {
 
         </TabsContent>
 
-        {/* UPDATES */}
+        {/* LATEST UPDATES */}
 
         <TabsContent value="updates">
           <LatestUpdatesManager />
@@ -238,7 +241,6 @@ const ContentManager = () => {
       </Tabs>
 
     </div>
-
   )
 }
 
