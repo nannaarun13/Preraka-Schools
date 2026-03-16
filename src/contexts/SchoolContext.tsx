@@ -47,7 +47,7 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
     case "SET_DATA":
       return {
         ...state,
-        data: action.payload,
+        data: action.payload || defaultSchoolData,
         loading: false
       }
 
@@ -70,10 +70,7 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
 const SchoolContext = createContext<{
   state: SchoolState
   updateData: (payload: Partial<SchoolData>) => Promise<void>
-}>({
-  state: initialState,
-  updateData: async () => {}
-})
+} | undefined>(undefined)
 
 /* ---------------- HOOK ---------------- */
 
@@ -103,7 +100,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
 
         dispatch({
           type: "SET_DATA",
-          payload: data
+          payload: data || defaultSchoolData
         })
 
       },
@@ -119,7 +116,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     )
 
-    return () => unsubscribe()
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
 
   }, [])
 
