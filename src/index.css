@@ -1,144 +1,49 @@
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  /* --- Shadcn UI & Base Colors --- */
+  --color-background: hsl(0 0% 98%);
+  --color-foreground: hsl(222.2 84% 4.9%);
 
-/* School Website Design System - Blue, Orange, White theme */
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222.2 84% 4.9%);
 
-@layer base {
-  :root {
-    --background: 0 0% 98%;
-    --foreground: 222.2 84% 4.9%;
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(222.2 84% 4.9%);
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+  --color-primary: hsl(220 91% 50%);
+  --color-primary-foreground: hsl(0 0% 100%);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+  --color-secondary: hsl(25 95% 53%);
+  --color-secondary-foreground: hsl(0 0% 100%);
 
-    --primary: 220 91% 50%;
-    --primary-foreground: 0 0% 100%;
+  --color-muted: hsl(220 14% 96%);
+  --color-muted-foreground: hsl(220 8% 46%);
 
-    --secondary: 25 95% 53%;
-    --secondary-foreground: 0 0% 100%;
+  --color-accent: hsl(25 95% 53%);
+  --color-accent-foreground: hsl(0 0% 100%);
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 8% 46%;
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(210 40% 98%);
 
-    --accent: 25 95% 53%;
-    --accent-foreground: 0 0% 100%;
+  --color-border: hsl(220 13% 91%);
+  --color-input: hsl(220 13% 91%);
+  --color-ring: hsl(220 91% 50%);
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+  --radius-lg: 0.5rem;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 220 91% 50%;
+  /* --- Preraka Custom Brand Colors --- */
+  --color-school-blue: hsl(220 91% 50%);
+  --color-school-orange: hsl(25 95% 53%);
+  --color-school-white: hsl(0 0% 100%);
+  --color-school-blue-light: hsl(220 91% 95%);
+  --color-school-orange-light: hsl(25 95% 95%);
+  --color-school-blue-dark: hsl(220 91% 40%);
+  --color-school-orange-dark: hsl(25 95% 45%);
 
-    --radius: 0.5rem;
+  /* --- Custom Animations --- */
+  --animate-fade-in: fadeIn 0.6s ease-in-out;
 
-    --school-blue: 220 91% 50%;
-    --school-orange: 25 95% 53%;
-    --school-white: 0 0% 100%;
-    --school-blue-light: 220 91% 95%;
-    --school-orange-light: 25 95% 95%;
-    --school-blue-dark: 220 91% 40%;
-    --school-orange-dark: 25 95% 45%;
-  }
-
-  .dark {
-    --background: 220 15% 8%;
-    --foreground: 210 40% 98%;
-    --card: 220 15% 10%;
-    --card-foreground: 210 40% 98%;
-    --popover: 220 15% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 220 91% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 25 95% 63%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 25 95% 63%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 220 91% 60%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-    background: linear-gradient(135deg, 
-      hsl(var(--school-white)) 0%, 
-      hsl(var(--school-blue-light)) 25%, 
-      hsl(var(--school-white)) 50%, 
-      hsl(var(--school-orange-light)) 75%, 
-      hsl(var(--school-white)) 100%);
-    min-height: 100vh;
-  }
-}
-
-@layer utilities {
-  .school-gradient {
-    background: linear-gradient(135deg, hsl(var(--school-blue)) 0%, hsl(var(--school-orange)) 100%);
-  }
-  
-  .school-gradient-light {
-    background: linear-gradient(135deg, hsl(var(--school-blue-light)) 0%, hsl(var(--school-orange-light)) 100%);
-  }
-  
-  .school-blue {
-    background-color: hsl(var(--school-blue));
-  }
-  
-  .school-orange {
-    background-color: hsl(var(--school-orange));
-  }
-  
-  .text-school-blue {
-    color: hsl(var(--school-blue));
-  }
-  
-  .text-school-orange {
-    color: hsl(var(--school-orange));
-  }
-
-  .bg-school-blue {
-    background-color: hsl(var(--school-blue));
-  }
-  
-  .bg-school-orange {
-    background-color: hsl(var(--school-orange));
-  }
-  
-  .bg-school-blue-light {
-    background-color: hsl(var(--school-blue-light));
-  }
-  
-  .bg-school-orange-light {
-    background-color: hsl(var(--school-orange-light));
-  }
-  
-  .bg-school-blue-dark {
-    background-color: hsl(var(--school-blue-dark));
-  }
-  
-  .bg-school-orange-dark {
-    background-color: hsl(var(--school-orange-dark));
-  }
-  
-  .animate-fade-in {
-    animation: fadeIn 0.6s ease-in-out;
-  }
-  
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -149,61 +54,84 @@
       transform: translateY(0);
     }
   }
+}
 
-  /* Page backgrounds with blue, orange, white theme */
-  .page-background {
+/* --- Base Styles --- */
+@layer base {
+  *, ::after, ::before {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
     background: linear-gradient(135deg, 
-      hsl(var(--school-white)) 0%, 
-      hsl(var(--school-blue-light)) 20%, 
-      hsl(var(--school-white)) 40%, 
-      hsl(var(--school-orange-light)) 60%, 
-      hsl(var(--school-white)) 80%, 
-      hsl(var(--school-blue-light)) 100%);
+      var(--color-school-white) 0%, 
+      var(--color-school-blue-light) 25%, 
+      var(--color-school-white) 50%, 
+      var(--color-school-orange-light) 75%, 
+      var(--color-school-white) 100%);
+    min-height: 100vh;
   }
+}
 
-  /* Embedded Google Maps styles */
-  .embed-map-responsive {
-    position: relative;
-    text-align: right;
-    width: 100%;
-    height: 0;
-    padding-bottom: 75%;
-  }
-  
-  .embed-map-container {
-    overflow: hidden;
-    background: none !important;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-  
-  .embed-map-frame {
-    width: 100% !important;
-    height: 100% !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    border: none;
-  }
+/* --- Custom Utilities --- */
+@utility school-gradient {
+  background: linear-gradient(135deg, var(--color-school-blue) 0%, var(--color-school-orange) 100%);
+}
 
-  /* Responsive utilities */
-  @media (max-width: 640px) {
-    .container {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-  }
+@utility school-gradient-light {
+  background: linear-gradient(135deg, var(--color-school-blue-light) 0%, var(--color-school-orange-light) 100%);
+}
 
-  @media (max-width: 768px) {
-    .text-4xl {
-      font-size: 2.25rem;
-    }
-    
-    .text-5xl {
-      font-size: 3rem;
-    }
-  }
+@utility page-background {
+  background: linear-gradient(135deg, 
+    var(--color-school-white) 0%, 
+    var(--color-school-blue-light) 20%, 
+    var(--color-school-white) 40%, 
+    var(--color-school-orange-light) 60%, 
+    var(--color-school-white) 80%, 
+    var(--color-school-blue-light) 100%);
+}
+
+@utility embed-map-responsive {
+  position: relative;
+  text-align: right;
+  width: 100%;
+  height: 0;
+  padding-bottom: 75%;
+}
+
+@utility embed-map-container {
+  overflow: hidden;
+  background: none !important;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+@utility embed-map-frame {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: none;
+}
+
+/* --- Dark Mode Overrides --- */
+@variant dark (&:where(.dark, .dark *));
+
+.dark {
+  --color-background: hsl(220 15% 8%);
+  --color-foreground: hsl(210 40% 98%);
+  --color-card: hsl(220 15% 10%);
+  --color-card-foreground: hsl(210 40% 98%);
+  --color-primary: hsl(220 91% 60%);
+  --color-secondary: hsl(25 95% 63%);
+  --color-muted: hsl(217.2 32.6% 17.5%);
+  --color-muted-foreground: hsl(215 20.2% 65.1%);
+  --color-border: hsl(217.2 32.6% 17.5%);
+  --color-ring: hsl(220 91% 60%);
 }
