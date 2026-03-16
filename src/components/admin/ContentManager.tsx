@@ -21,32 +21,30 @@ const ContentManager = () => {
   const [isSaving, setIsSaving] = useState(false)
 
   const [generalContent, setGeneralContent] = useState({
-    welcomeMessage: "",
-    welcomeImage: "",
-    aboutContent: "",
-    missionStatement: "",
-    visionStatement: "",
-    schoolLogo: "",
     schoolName: "",
-    schoolNameImage: ""
+    schoolLogo: "",
+    welcomeMessage: "",
+    email: "",
+    phone: "",
+    address: ""
   })
 
-  /* ---------------- SYNC FORM WITH CONTEXT ---------------- */
+  /* ---------------- SYNC WITH CONTEXT ---------------- */
 
   useEffect(() => {
 
+    if (!state?.data) return
+
     setGeneralContent({
-      welcomeMessage: state.data.welcomeMessage,
-      welcomeImage: state.data.welcomeImage,
-      aboutContent: state.data.aboutContent,
-      missionStatement: state.data.missionStatement,
-      visionStatement: state.data.visionStatement,
-      schoolLogo: state.data.schoolLogo,
-      schoolName: state.data.schoolName,
-      schoolNameImage: state.data.schoolNameImage || ""
+      schoolName: state.data.schoolName || "",
+      schoolLogo: state.data.schoolLogo || "",
+      welcomeMessage: state.data.welcomeMessage || "",
+      email: state.data.email || "",
+      phone: state.data.phone || "",
+      address: state.data.address || ""
     })
 
-  }, [state.data])
+  }, [state])
 
   /* ---------------- INPUT CHANGE ---------------- */
 
@@ -79,7 +77,7 @@ const ContentManager = () => {
 
     } catch (error) {
 
-      console.error("Save failed:", error)
+      console.error(error)
 
       toast({
         title: "Save Failed",
@@ -95,6 +93,7 @@ const ContentManager = () => {
   /* ---------------- UI ---------------- */
 
   return (
+
     <div className="space-y-6">
 
       <div className="flex items-center justify-between">
@@ -131,12 +130,12 @@ const ContentManager = () => {
 
                   {isSaving ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin"/>
                       Saving...
                     </>
                   ) : (
                     <>
-                      <Save className="h-4 w-4 mr-2" />
+                      <Save className="h-4 w-4 mr-2"/>
                       Save Changes
                     </>
                   )}
@@ -165,103 +164,57 @@ const ContentManager = () => {
               {/* SCHOOL NAME */}
 
               <div>
-                <Label htmlFor="schoolName">School Name</Label>
-
+                <Label>School Name</Label>
                 <Input
-                  id="schoolName"
                   name="schoolName"
                   value={generalContent.schoolName}
                   onChange={handleInputChange}
                 />
               </div>
 
-              {/* SCHOOL NAME IMAGE */}
-
-              <ImageUpload
-                label="School Name Image"
-                currentImage={generalContent.schoolNameImage}
-                onImageUpload={(url) =>
-                  setGeneralContent(prev => ({
-                    ...prev,
-                    schoolNameImage: url
-                  }))
-                }
-              />
-
               {/* WELCOME MESSAGE */}
 
               <div>
-
-                <Label htmlFor="welcomeMessage">Welcome Message</Label>
-
+                <Label>Welcome Message</Label>
                 <Input
-                  id="welcomeMessage"
                   name="welcomeMessage"
                   value={generalContent.welcomeMessage}
                   onChange={handleInputChange}
                 />
-
               </div>
 
-              {/* WELCOME IMAGE */}
-
-              <ImageUpload
-                label="Welcome Image"
-                currentImage={generalContent.welcomeImage}
-                onImageUpload={(url) =>
-                  setGeneralContent(prev => ({
-                    ...prev,
-                    welcomeImage: url
-                  }))
-                }
-              />
-
-              {/* ABOUT */}
+              {/* EMAIL */}
 
               <div>
-
-                <Label htmlFor="aboutContent">About Content</Label>
-
-                <Textarea
-                  id="aboutContent"
-                  name="aboutContent"
-                  rows={4}
-                  value={generalContent.aboutContent}
+                <Label>Email</Label>
+                <Input
+                  name="email"
+                  value={generalContent.email}
                   onChange={handleInputChange}
                 />
-
               </div>
 
-              {/* MISSION */}
+              {/* PHONE */}
 
               <div>
+                <Label>Phone</Label>
+                <Input
+                  name="phone"
+                  value={generalContent.phone}
+                  onChange={handleInputChange}
+                />
+              </div>
 
-                <Label htmlFor="missionStatement">Mission Statement</Label>
+              {/* ADDRESS */}
 
+              <div>
+                <Label>Address</Label>
                 <Textarea
-                  id="missionStatement"
-                  name="missionStatement"
+                  name="address"
                   rows={3}
-                  value={generalContent.missionStatement}
+                  value={generalContent.address}
                   onChange={handleInputChange}
                 />
-
-              </div>
-
-              {/* VISION */}
-
-              <div>
-
-                <Label htmlFor="visionStatement">Vision Statement</Label>
-
-                <Textarea
-                  id="visionStatement"
-                  name="visionStatement"
-                  rows={3}
-                  value={generalContent.visionStatement}
-                  onChange={handleInputChange}
-                />
-
               </div>
 
             </CardContent>
@@ -270,7 +223,7 @@ const ContentManager = () => {
 
         </TabsContent>
 
-        {/* LATEST UPDATES */}
+        {/* UPDATES */}
 
         <TabsContent value="updates">
           <LatestUpdatesManager />
@@ -285,6 +238,7 @@ const ContentManager = () => {
       </Tabs>
 
     </div>
+
   )
 }
 
