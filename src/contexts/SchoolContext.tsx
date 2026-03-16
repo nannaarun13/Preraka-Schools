@@ -4,6 +4,28 @@ import { subscribeToSchoolData, updateSchoolData } from "../utils/schoolDataUtil
 
 /* ---------------- TYPES ---------------- */
 
+export interface Notice {
+  id?: string
+  title: string
+  content: string
+  type: string
+  date: string
+}
+
+export interface GalleryImage {
+  id?: string
+  url: string
+  caption?: string
+}
+
+export interface Admission {
+  id?: string
+  studentName: string
+  parentName: string
+  phone: string
+  class: string
+}
+
 export interface SchoolData {
   schoolName: string
   schoolLogo: string
@@ -11,6 +33,9 @@ export interface SchoolData {
   email: string
   phone: string
   address: string
+  notices: Notice[]
+  gallery: GalleryImage[]
+  admissions: Admission[]
 }
 
 interface SchoolState {
@@ -30,7 +55,10 @@ export const defaultSchoolData: SchoolData = {
   welcomeMessage: "Welcome to Preraka Schools",
   email: "info@school.edu",
   phone: "+91 9876543210",
-  address: ""
+  address: "",
+  notices: [],
+  gallery: [],
+  admissions: []
 }
 
 const initialState: SchoolState = {
@@ -41,13 +69,15 @@ const initialState: SchoolState = {
 /* ---------------- REDUCER ---------------- */
 
 const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState => {
-
   switch (action.type) {
 
     case "SET_DATA":
       return {
         ...state,
-        data: action.payload || defaultSchoolData,
+        data: {
+          ...defaultSchoolData,
+          ...action.payload
+        },
         loading: false
       }
 
@@ -87,15 +117,14 @@ export const useSchool = () => {
 
 /* ---------------- PROVIDER ---------------- */
 
-export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
-  children
-}) => {
+export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const [state, dispatch] = useReducer(schoolReducer, initialState)
 
   useEffect(() => {
 
     const unsubscribe = subscribeToSchoolData(
+
       (data) => {
 
         dispatch({
@@ -104,6 +133,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
         })
 
       },
+
       (error) => {
 
         console.error("Firestore error:", error)
@@ -114,6 +144,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
         })
 
       }
+
     )
 
     return () => {
@@ -130,9 +161,13 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({
     })
 
     try {
+
       await updateSchoolData(payload)
+
     } catch (error) {
+
       console.error("Firestore update failed:", error)
+
     }
   }
 
