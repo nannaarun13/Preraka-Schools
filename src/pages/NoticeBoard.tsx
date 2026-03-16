@@ -4,7 +4,8 @@ import { Calendar } from 'lucide-react';
 
 const PublicNoticeBoard = () => {
   const { state } = useSchool();
-  const { notices } = state.data;
+
+  const notices = state?.data?.notices || [];
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
@@ -19,34 +20,34 @@ const PublicNoticeBoard = () => {
       ) : (
         <div className="space-y-4">
           {notices.map((notice) => (
-            <Card key={notice.id}>
+            <Card key={notice?.id}>
               <CardContent className="p-5 space-y-2">
-                
+
                 {/* Type + Date */}
                 <div className="flex items-center gap-3 text-sm text-gray-500">
                   <span className={`px-2 py-1 rounded text-white text-xs
-                    ${notice.type === 'Event' ? 'bg-school-orange' :
-                      notice.type === 'Academic' ? 'bg-school-blue' :
-                      notice.type === 'Meeting' ? 'bg-green-500' :
+                    ${notice?.type === 'Event' ? 'bg-school-orange' :
+                      notice?.type === 'Academic' ? 'bg-school-blue' :
+                      notice?.type === 'Meeting' ? 'bg-green-500' :
                       'bg-gray-500'}
                   `}>
-                    {notice.type}
+                    {notice?.type}
                   </span>
 
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    {notice.date}
+                    {notice?.date}
                   </span>
                 </div>
 
                 {/* Title */}
                 <h2 className="text-lg font-semibold">
-                  {notice.title}
+                  {notice?.title}
                 </h2>
 
                 {/* Content */}
                 <p className="text-gray-700">
-                  {notice.content}
+                  {notice?.content}
                 </p>
 
               </CardContent>
