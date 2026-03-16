@@ -1,112 +1,61 @@
+@import "tailwindcss";
 
-import type { Config } from "tailwindcss";
+@theme {
+  /* --- Existing Colors & Radius --- */
+  --color-border: hsl(220 13% 91%);
+  --color-input: hsl(220 13% 91%);
+  --color-ring: hsl(220 91% 50%);
+  --color-background: hsl(0 0% 98%);
+  --color-foreground: hsl(222.2 84% 4.9%);
 
-export default {
-	darkMode: ["class"],
-	content: [
-		"./pages/**/*.{ts,tsx}",
-		"./components/**/*.{ts,tsx}",
-		"./app/**/*.{ts,tsx}",
-		"./src/**/*.{ts,tsx}",
-	],
-	prefix: "",
-	theme: {
-		container: {
-			center: true,
-			padding: '2rem',
-			screens: {
-				'2xl': '1400px'
-			}
-		},
-		extend: {
-			colors: {
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
-				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
-				},
-				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
-				},
-				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
-				},
-				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))'
-				},
-				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
-				},
-				popover: {
-					DEFAULT: 'hsl(var(--popover))',
-					foreground: 'hsl(var(--popover-foreground))'
-				},
-				card: {
-					DEFAULT: 'hsl(var(--card))',
-					foreground: 'hsl(var(--card-foreground))'
-				},
-				'school-blue': 'hsl(var(--school-blue))',
-				'school-orange': 'hsl(var(--school-orange))',
-				'school-white': 'hsl(var(--school-white))',
-				'school-blue-light': 'hsl(var(--school-blue-light))',
-				'school-orange-light': 'hsl(var(--school-orange-light))',
-			},
-			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
-			},
-			keyframes: {
-				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
-				},
-				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
-				},
-				'fade-in': {
-					'0%': {
-						opacity: '0',
-						transform: 'translateY(10px)'
-					},
-					'100%': {
-						opacity: '1',
-						transform: 'translateY(0)'
-					}
-				},
-				'slide-in': {
-					'0%': {
-						transform: 'translateX(-100%)'
-					},
-					'100%': {
-						transform: 'translateX(0)'
-					}
-				}
-			},
-			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.6s ease-out',
-				'slide-in': 'slide-in 0.3s ease-out'
-			}
-		}
-	},
-	plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+  --color-primary: hsl(220 91% 50%);
+  --color-primary-foreground: hsl(0 0% 100%);
+
+  --color-school-blue: hsl(220 91% 50%);
+  --color-school-orange: hsl(25 95% 53%);
+  --color-school-blue-light: hsl(220 91% 95%);
+  --color-school-orange-light: hsl(25 95% 95%);
+
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
+
+  /* --- Container Configuration --- */
+  /* V4 automatically centers containers if you set the max-width */
+  --container-2xl: 1400px;
+
+  /* --- Animations & Keyframes --- */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in: fade-in 0.6s ease-out;
+  --animate-slide-in: slide-in 0.3s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+  @keyframes fade-in {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-in {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(0); }
+  }
+}
+
+/* --- Tailwind Animate Plugin --- */
+/* In v4, you don't 'require' it in a JS file. You import it or use the built-in logic. 
+   Most shadcn components use 'tailwindcss-animate' which you can keep in package.json */
+@plugin "tailwindcss-animate";
+
+@layer base {
+  *, ::after, ::before {
+    @apply border-border;
+  }
+  /* Your existing body gradient remains here */
+}
