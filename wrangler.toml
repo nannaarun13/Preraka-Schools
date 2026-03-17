@@ -2,10 +2,7 @@ name = "preraka-schools"
 compatibility_date = "2026-03-17"
 
 [assets]
-directory = "./dist"name = "preraka-schools"
-compatibility_date = "2026-03-17"
+directory = "./dist"
 
-[assets]
-directory = "./dist"[build]
+[build]
 command = "npm install && npm run build"
-
