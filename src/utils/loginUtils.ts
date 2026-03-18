@@ -5,11 +5,13 @@ import {
   signOut,
   User,
 } from "firebase/auth";
+
 import {
   doc,
   getDoc,
   setDoc,
 } from "firebase/firestore";
+
 import { auth, db } from "@/lib/firebase";
 
 /* =======================
@@ -48,6 +50,7 @@ export const handleLogin = async (
 
   // 🔐 Firebase Authentication
   const credential = await signInWithEmailAndPassword(auth, email, password);
+
   const user = credential.user;
 
   if (!user || !user.uid) {
@@ -57,25 +60,39 @@ export const handleLogin = async (
   const adminRef = doc(db, "admins", user.uid);
   let adminSnap = await getDoc(adminRef);
 
-  // 🔥 Auto-create DEFAULT ADMIN
+  /* =======================
+     AUTO CREATE DEFAULT ADMIN
+  ======================= */
+
   if (!adminSnap.exists()) {
+
     if (user.email?.toLowerCase() === DEFAULT_ADMIN_EMAIL) {
+
       await setDoc(adminRef, {
         uid: user.uid,
         email: user.email.toLowerCase(),
         status: "approved",
+        role: "super_admin",
         approvedBy: "system",
         approvedAt: new Date().toISOString(),
       });
+
       adminSnap = await getDoc(adminRef);
+
     } else {
+
       await signOut(auth);
       throw new Error("Admin access not granted");
+
     }
   }
 
-  // ✅ Status Check
+  /* =======================
+     ADMIN STATUS CHECK
+  ======================= */
+
   const adminData = adminSnap.data();
+
   if (!adminData || adminData.status !== "approved") {
     await signOut(auth);
     throw new Error("Admin account not approved");
@@ -99,4 +116,27 @@ export const handleLogout = async (): Promise<void> => {
 export const handleForgotPassword = async (
   values: z.infer<typeof forgotPasswordSchema>
 ): Promise<void> => {
-  await
+
+  const email = values.email.toLowerCase().trim();
+
+  if (!email) {
+    throw new Error("Email is required");
+  }
+
+  try {
+
+    await sendPasswordResetEmail(auth, email);
+
+  } catch (error: any) {
+
+    if (error.code === "auth/user-not-found") {
+      throw new Error("No account found with this email");
+    }
+
+    if (error.code === "auth/invalid-email") {
+      throw new Error("Invalid email format");
+    }
+
+    throw new Error("Failed to send password reset email");
+  }
+};
