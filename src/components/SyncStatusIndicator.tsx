@@ -1,152 +1,211 @@
-import { useState, useEffect, useCallback } from 'react';
-import { CheckCircle, CloudOff, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
-import { processPendingUpdates } from '@/utils/schoolDataUtils'; // Import the sync function
+import { useState, useEffect, useCallback, useRef } from "react"
+import {
+  CheckCircle,
+  CloudOff,
+  Loader2,
+  AlertCircle,
+  RefreshCw
+} from "lucide-react"
+
+import { processPendingUpdates } from "@/utils/schoolDataUtils"
 
 const SyncStatusIndicator = () => {
-  const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline' | 'pending' | 'error'>('synced');
-  const [pendingCount, setPendingCount] = useState(0);
 
-  // Safe wrapper to check storage
-  const checkPendingUpdates = useCallback(async () => {
+  const [syncStatus, setSyncStatus] = useState<
+    "synced" | "syncing" | "offline" | "pending" | "error"
+  >("synced")
+
+  const [pendingCount, setPendingCount] = useState(0)
+
+  const syncingRef = useRef(false)
+
+  /* SAFE JSON PARSE */
+
+  const getPendingUpdates = () => {
     try {
-      const pendingRaw = localStorage.getItem('pendingUpdates');
-      const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
-      setPendingCount(pending.length);
-
-      if (!navigator.onLine) {
-        setSyncStatus('offline');
-        return;
-      }
-
-      if (pending.length > 0) {
-        // If we are online but have pending items, try to sync them immediately
-        setSyncStatus('syncing');
-        try {
-          await processPendingUpdates();
-          setSyncStatus('synced');
-          setPendingCount(0);
-        } catch (error) {
-          console.error("Auto-sync failed:", error);
-          setSyncStatus('error');
-        }
-      } else {
-        setSyncStatus('synced');
-      }
-    } catch (error) {
-      console.error('Error reading sync status:', error);
-      setSyncStatus('error');
+      const raw = localStorage.getItem("pendingUpdates")
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
     }
-  }, []);
+  }
+
+  /* MAIN SYNC CHECK */
+
+  const checkPendingUpdates = useCallback(async () => {
+
+    if (syncingRef.current) return
+
+    const pending = getPendingUpdates()
+
+    setPendingCount(pending.length)
+
+    if (!navigator.onLine) {
+      setSyncStatus("offline")
+      return
+    }
+
+    if (pending.length === 0) {
+      setSyncStatus("synced")
+      return
+    }
+
+    try {
+
+      syncingRef.current = true
+      setSyncStatus("syncing")
+
+      await processPendingUpdates()
+
+      setSyncStatus("synced")
+      setPendingCount(0)
+
+    } catch (error) {
+
+      console.error("Sync failed:", error)
+      setSyncStatus("error")
+
+    } finally {
+
+      syncingRef.current = false
+
+    }
+
+  }, [])
+
+  /* EFFECTS */
 
   useEffect(() => {
-    // Check initially
-    checkPendingUpdates();
 
-    // Listen for storage changes (updates from other tabs or logic)
+    checkPendingUpdates()
+
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'pendingUpdates') {
-        checkPendingUpdates();
+      if (e.key === "pendingUpdates") {
+        checkPendingUpdates()
       }
-    };
+    }
 
-    // Handle coming online: Actively trigger sync
     const handleOnline = () => {
-      console.log('Network restored. Attempting sync...');
-      checkPendingUpdates();
-    };
+      console.log("Network restored, syncing...")
+      checkPendingUpdates()
+    }
 
     const handleOffline = () => {
-      setSyncStatus('offline');
-    };
+      setSyncStatus("offline")
+    }
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("storage", handleStorageChange)
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
 
-    // Periodic check (every 10 seconds)
-    const interval = setInterval(checkPendingUpdates, 10000);
+    const interval = setInterval(checkPendingUpdates, 10000)
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      clearInterval(interval);
-    };
-  }, [checkPendingUpdates]);
+      window.removeEventListener("storage", handleStorageChange)
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+      clearInterval(interval)
+    }
 
-  // Manual retry handler
+  }, [checkPendingUpdates])
+
+  /* MANUAL SYNC */
+
   const handleManualSync = () => {
     if (navigator.onLine) {
-      checkPendingUpdates();
+      checkPendingUpdates()
     }
-  };
+  }
+
+  /* STATUS CONFIG */
 
   const getStatusInfo = () => {
+
     switch (syncStatus) {
-      case 'synced':
+
+      case "synced":
         return {
           icon: CheckCircle,
-          text: 'Saved',
-          color: 'text-green-600',
-          bgColor: 'bg-green-50',
-          animate: false
-        };
-      case 'syncing':
+          text: "Saved",
+          color: "text-green-600",
+          bg: "bg-green-50",
+          spin: false
+        }
+
+      case "syncing":
         return {
           icon: Loader2,
-          text: 'Syncing...',
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50',
-          animate: true
-        };
-      case 'offline':
+          text: "Syncing...",
+          color: "text-blue-600",
+          bg: "bg-blue-50",
+          spin: true
+        }
+
+      case "offline":
         return {
           icon: CloudOff,
-          text: pendingCount > 0 ? `${pendingCount} changes queued` : 'Offline',
-          color: 'text-gray-600',
-          bgColor: 'bg-gray-100',
-          animate: false
-        };
-      case 'pending': // Online but hasn't synced yet
+          text: pendingCount
+            ? `${pendingCount} changes queued`
+            : "Offline",
+          color: "text-gray-600",
+          bg: "bg-gray-100",
+          spin: false
+        }
+
+      case "pending":
         return {
-            icon: RefreshCw,
-            text: `${pendingCount} unsaved changes`,
-            color: 'text-orange-600',
-            bgColor: 'bg-orange-50',
-            animate: false
-        };
-      case 'error':
+          icon: RefreshCw,
+          text: `${pendingCount} unsaved changes`,
+          color: "text-orange-600",
+          bg: "bg-orange-50",
+          spin: false
+        }
+
+      case "error":
         return {
           icon: AlertCircle,
-          text: 'Sync Failed (Click to retry)',
-          color: 'text-red-600',
-          bgColor: 'bg-red-50',
-          animate: false,
+          text: "Sync Failed (Click to retry)",
+          color: "text-red-600",
+          bg: "bg-red-50",
+          spin: false,
           clickable: true
-        };
+        }
+
       default:
         return {
-            icon: CheckCircle,
-            text: 'Unknown',
-            color: 'text-gray-500',
-            bgColor: 'bg-gray-50',
-            animate: false
-        };
-    }
-  };
+          icon: CheckCircle,
+          text: "Unknown",
+          color: "text-gray-500",
+          bg: "bg-gray-50",
+          spin: false
+        }
 
-  const { icon: Icon, text, color, bgColor, animate, clickable } = getStatusInfo();
+    }
+
+  }
+
+  const { icon: Icon, text, color, bg, spin, clickable } = getStatusInfo()
 
   return (
-    <div 
-      onClick={clickable ? handleManualSync : undefined}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${color} ${bgColor} ${clickable ? 'cursor-pointer hover:bg-opacity-80 active:scale-95' : ''}`}
-      title={clickable ? "Click to retry sync" : undefined}
-    >
-      <Icon className={`h-3.5 w-3.5 ${animate ? 'animate-spin' : ''}`} />
-      <span>{text}</span>
-    </div>
-  );
-};
 
-export default SyncStatusIndicator;
+    <div
+      onClick={clickable ? handleManualSync : undefined}
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${color} ${bg} ${
+        clickable
+          ? "cursor-pointer hover:opacity-80 active:scale-95"
+          : ""
+      }`}
+      title={clickable ? "Click to retry sync" : ""}
+    >
+
+      <Icon className={`h-3.5 w-3.5 ${spin ? "animate-spin" : ""}`} />
+
+      <span>{text}</span>
+
+    </div>
+
+  )
+
+}
+
+export default SyncStatusIndicator
