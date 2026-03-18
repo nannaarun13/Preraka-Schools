@@ -1,65 +1,129 @@
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import React, { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+
+import { db } from "@/lib/firebase"
+import { collection, addDoc } from "firebase/firestore"
 
 const AdminRegistrationForm = () => {
 
-  const [step, setStep] = useState(1);
+  const [step,setStep] = useState(1)
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: ""
-  });
+  const [generatedEmailOTP,setGeneratedEmailOTP] = useState("")
 
-  const [emailOTP, setEmailOTP] = useState("");
-  const [phoneOTP, setPhoneOTP] = useState("");
+  const [emailOTP,setEmailOTP] = useState("")
+  const [phoneOTP,setPhoneOTP] = useState("")
+
+  const [formData,setFormData] = useState({
+    firstName:"",
+    lastName:"",
+    email:"",
+    phone:"",
+    password:"",
+    confirmPassword:""
+  })
 
   const handleChange = (e:any) => {
 
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    });
+      [e.target.name]:e.target.value
+    })
 
-  };
+  }
 
-  const sendOTP = async () => {
+  /* SEND OTP */
 
-    // API call to send OTP
-    console.log("Send OTP to", formData.email, formData.phone);
+  const sendOTP = () => {
 
-    setStep(2);
+    if(!formData.email || !formData.phone){
 
-  };
+      alert("Email and phone required")
+      return
 
-  const verifyOTP = async () => {
+    }
 
-    console.log("Verify OTP");
+    if(formData.password !== formData.confirmPassword){
 
-    setStep(3);
+      alert("Passwords do not match")
+      return
 
-  };
+    }
+
+    const otp = Math.floor(100000 + Math.random()*900000)
+
+    setGeneratedEmailOTP(otp.toString())
+
+    alert("Demo Email OTP: "+otp)
+
+    console.log("Send Email OTP to",formData.email)
+
+    console.log("Send Phone OTP to +91"+formData.phone)
+
+    setStep(2)
+
+  }
+
+  /* VERIFY OTP */
+
+  const verifyOTP = () => {
+
+    if(emailOTP !== generatedEmailOTP){
+
+      alert("Invalid Email OTP")
+      return
+
+    }
+
+    if(phoneOTP.length !== 6){
+
+      alert("Enter valid phone OTP")
+      return
+
+    }
+
+    setStep(3)
+
+  }
+
+  /* SUBMIT REGISTRATION */
 
   const submitRegistration = async () => {
 
     const data = {
-      ...formData,
-      status: "pending",
-      createdAt: new Date().toISOString()
-    };
 
-    console.log("Registration Request", data);
+      firstName:formData.firstName,
+      lastName:formData.lastName,
+      email:formData.email,
+      phone:"+91"+formData.phone,
+      status:"pending",
+      createdAt:new Date().toISOString()
 
-    alert("Registration submitted. Waiting for admin approval.");
+    }
 
-  };
+    try{
 
-  return (
+      await addDoc(
+        collection(db,"admins"),
+        data
+      )
+
+      alert("Registration submitted. Waiting for approval.")
+
+      setStep(1)
+
+    }catch(error){
+
+      console.error(error)
+
+      alert("Failed to submit registration")
+
+    }
+
+  }
+
+  return(
 
     <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow">
 
@@ -88,9 +152,28 @@ const AdminRegistrationForm = () => {
             <Input type="email" name="email" onChange={handleChange}/>
           </div>
 
+          {/* PHONE WITH +91 */}
+
           <div>
+
             <Label>Indian Phone</Label>
-            <Input placeholder="+91XXXXXXXXXX" name="phone" onChange={handleChange}/>
+
+            <div className="flex">
+
+              <span className="px-3 py-2 bg-gray-100 border border-r-0 rounded-l-md">
+                +91
+              </span>
+
+              <Input
+                name="phone"
+                maxLength={10}
+                placeholder="9876543210"
+                className="rounded-l-none"
+                onChange={handleChange}
+              />
+
+            </div>
+
           </div>
 
           <div>
@@ -147,7 +230,9 @@ const AdminRegistrationForm = () => {
 
         <div className="space-y-4 text-center">
 
-          <p>OTP Verified Successfully</p>
+          <p className="text-green-600 font-semibold">
+            OTP Verified Successfully
+          </p>
 
           <Button onClick={submitRegistration}>
             Submit Registration
@@ -159,8 +244,8 @@ const AdminRegistrationForm = () => {
 
     </div>
 
-  );
+  )
 
-};
+}
 
-export default AdminRegistrationForm;
+export default AdminRegistrationForm
