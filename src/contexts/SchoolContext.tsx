@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react"
 import { Loader2 } from "lucide-react"
-import { subscribeToSchoolData, updateSchoolData } from "../utils/schoolDataUtils"
+import { subscribeToSchoolData, updateSchoolData } from "@/utils/schoolDataUtils"
 
 /* ---------------- TYPES ---------------- */
 
@@ -8,7 +8,6 @@ export interface Notice {
   id?: string
   title: string
   content: string
-  type: string
   date: string
 }
 
@@ -16,14 +15,46 @@ export interface GalleryImage {
   id?: string
   url: string
   caption?: string
+  category?: string
+  date?: string
 }
 
-export interface Admission {
+export interface AdmissionInquiry {
   id?: string
   studentName: string
-  parentName: string
+  fatherName: string
+  motherName: string
+  primaryContact: string
+  classApplied: string
+  location?: string
+  submittedAt?: string
+}
+
+export interface Founder {
+  id?: string
+  name: string
+  details: string
+  image: string
+}
+
+export interface LatestUpdate {
+  id?: string
+  content: string
+  date: string
+}
+
+export interface ContactNumber {
+  id: string
+  label: string
+  number: string
+}
+
+export interface ContactInfo {
+  address: string
+  email: string
   phone: string
-  class: string
+  contactNumbers: ContactNumber[]
+  mapEmbed?: string
 }
 
 export interface SchoolData {
@@ -33,19 +64,36 @@ export interface SchoolData {
   email: string
   phone: string
   address: string
+
   notices: Notice[]
-  gallery: GalleryImage[]
-  admissions: Admission[]
+  galleryImages: GalleryImage[]
+  admissionInquiries: AdmissionInquiry[]
+
+  founders: Founder[]
+  latestUpdates: LatestUpdate[]
+  contactInfo: ContactInfo
 }
+
+/* ---------------- STATE ---------------- */
 
 interface SchoolState {
   data: SchoolData
   loading: boolean
 }
 
+/* ---------------- ACTIONS ---------------- */
+
 type SchoolAction =
   | { type: "SET_DATA"; payload: SchoolData }
-  | { type: "UPDATE_DATA"; payload: Partial<SchoolData> }
+  | { type: "UPDATE_SCHOOL_DATA"; payload: Partial<SchoolData> }
+  | { type: "ADD_NOTICE"; payload: Notice }
+  | { type: "DELETE_NOTICE"; payload: string }
+  | { type: "ADD_GALLERY_IMAGE"; payload: GalleryImage }
+  | { type: "DELETE_GALLERY_IMAGE"; payload: string }
+  | { type: "ADD_LATEST_UPDATE"; payload: LatestUpdate }
+  | { type: "DELETE_LATEST_UPDATE"; payload: string }
+  | { type: "ADD_FOUNDER"; payload: Founder }
+  | { type: "DELETE_FOUNDER"; payload: string }
 
 /* ---------------- DEFAULT DATA ---------------- */
 
@@ -56,9 +104,21 @@ export const defaultSchoolData: SchoolData = {
   email: "info@school.edu",
   phone: "+91 9876543210",
   address: "",
+
   notices: [],
-  gallery: [],
-  admissions: []
+  galleryImages: [],
+  admissionInquiries: [],
+
+  founders: [],
+  latestUpdates: [],
+
+  contactInfo: {
+    address: "",
+    email: "",
+    phone: "",
+    contactNumbers: [],
+    mapEmbed: ""
+  }
 }
 
 const initialState: SchoolState = {
@@ -69,6 +129,7 @@ const initialState: SchoolState = {
 /* ---------------- REDUCER ---------------- */
 
 const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState => {
+
   switch (action.type) {
 
     case "SET_DATA":
@@ -81,12 +142,84 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
         loading: false
       }
 
-    case "UPDATE_DATA":
+    case "UPDATE_SCHOOL_DATA":
       return {
         ...state,
         data: {
           ...state.data,
           ...action.payload
+        }
+      }
+
+    case "ADD_NOTICE":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          notices: [...state.data.notices, action.payload]
+        }
+      }
+
+    case "DELETE_NOTICE":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          notices: state.data.notices.filter(n => n.id !== action.payload)
+        }
+      }
+
+    case "ADD_GALLERY_IMAGE":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          galleryImages: [...state.data.galleryImages, action.payload]
+        }
+      }
+
+    case "DELETE_GALLERY_IMAGE":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          galleryImages: state.data.galleryImages.filter(i => i.id !== action.payload)
+        }
+      }
+
+    case "ADD_LATEST_UPDATE":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          latestUpdates: [...state.data.latestUpdates, action.payload]
+        }
+      }
+
+    case "DELETE_LATEST_UPDATE":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          latestUpdates: state.data.latestUpdates.filter(u => u.id !== action.payload)
+        }
+      }
+
+    case "ADD_FOUNDER":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          founders: [...state.data.founders, action.payload]
+        }
+      }
+
+    case "DELETE_FOUNDER":
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          founders: state.data.founders.filter(f => f.id !== action.payload)
         }
       }
 
@@ -99,6 +232,7 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
 
 const SchoolContext = createContext<{
   state: SchoolState
+  dispatch: React.Dispatch<SchoolAction>
   updateData: (payload: Partial<SchoolData>) => Promise<void>
 } | undefined>(undefined)
 
@@ -156,7 +290,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const updateData = async (payload: Partial<SchoolData>) => {
 
     dispatch({
-      type: "UPDATE_DATA",
+      type: "UPDATE_SCHOOL_DATA",
       payload
     })
 
@@ -171,22 +305,36 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }
 
+  /* LOADING SCREEN */
+
   if (state.loading) {
+
     return (
+
       <div className="fixed inset-0 flex items-center justify-center bg-white">
+
         <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+
       </div>
+
     )
+
   }
 
   return (
+
     <SchoolContext.Provider
       value={{
         state,
+        dispatch,
         updateData
       }}
     >
+
       {children}
+
     </SchoolContext.Provider>
+
   )
+
 }
