@@ -10,11 +10,11 @@ export default defineConfig(({ mode }) => {
   const isDev = mode === "development";
 
   return {
-    base: "/",   // ✅ IMPORTANT FIX
+    base: "/",
 
     server: {
       host: true,
-      port: 8080,
+      port: 3000,   // ✅ changed from 8080 to 3000
       strictPort: true,
     },
 
