@@ -9,13 +9,27 @@ import {
 import { db } from "@/lib/firebase"
 import { SchoolData, defaultSchoolData } from "@/contexts/SchoolContext"
 
-/* ---------------- DOC REF ---------------- */
+/* ---------------- FIRESTORE DOC ---------------- */
 
 const schoolConfigRef = () => doc(db, "school", "config")
 
-/* ---------------- CACHE FOR SNAPSHOT ---------------- */
+/* ---------------- SNAPSHOT CACHE ---------------- */
 
 let lastSnapshot = ""
+
+/* ---------------- SAFE JSON PARSE ---------------- */
+
+const safeParse = (value: string | null) => {
+
+  if (!value) return null
+
+  try {
+    return JSON.parse(value)
+  } catch {
+    return null
+  }
+
+}
 
 /* ---------------- CLEAN DATA ---------------- */
 
@@ -34,6 +48,17 @@ const cleanData = (data: any) => {
   return cleaned
 }
 
+/* ---------------- CACHE SAVE ---------------- */
+
+const saveCache = (data: SchoolData) => {
+
+  localStorage.setItem(
+    "schoolData",
+    JSON.stringify(data)
+  )
+
+}
+
 /* ---------------- GET SCHOOL DATA ---------------- */
 
 export const getSchoolData = async (): Promise<SchoolData> => {
@@ -49,14 +74,10 @@ export const getSchoolData = async (): Promise<SchoolData> => {
         ...docSnap.data()
       } as SchoolData
 
-      localStorage.setItem(
-        "schoolData",
-        JSON.stringify({
-          schoolName: data.schoolName
-        })
-      )
+      saveCache(data)
 
       return data
+
     }
 
     return defaultSchoolData
@@ -65,25 +86,19 @@ export const getSchoolData = async (): Promise<SchoolData> => {
 
     console.error("Error fetching school data:", error)
 
-    const cached = localStorage.getItem("schoolData")
+    const cached = safeParse(localStorage.getItem("schoolData"))
 
     if (cached) {
-
-      try {
-
-        return {
-          ...defaultSchoolData,
-          ...JSON.parse(cached)
-        }
-
-      } catch {
-
-        return defaultSchoolData
+      return {
+        ...defaultSchoolData,
+        ...cached
       }
     }
 
     return defaultSchoolData
+
   }
+
 }
 
 /* ---------------- UPDATE SCHOOL DATA ---------------- */
@@ -102,18 +117,15 @@ export const updateSchoolData = async (
 
       const current = snap.data()
 
-      /* check if actual change exists */
-
       const changed = Object.keys(safeData).some(
-        key => current[key] !== safeData[key]
+        key => JSON.stringify(current[key]) !== JSON.stringify(safeData[key])
       )
 
       if (!changed) {
-
         console.log("No changes detected. Skipping update.")
-
         return
       }
+
     }
 
     await setDoc(
@@ -126,11 +138,17 @@ export const updateSchoolData = async (
 
   } catch (error) {
 
-    console.error("Update failed, saving to queue:", error)
+    console.error("Update failed, saving offline:", error)
 
-    const pending = JSON.parse(
-      localStorage.getItem("pendingUpdates") || "[]"
-    )
+    const pending = safeParse(
+      localStorage.getItem("pendingUpdates")
+    ) || []
+
+    /* limit queue size */
+
+    if (pending.length > 50) {
+      pending.shift()
+    }
 
     pending.push({
       data: safeData,
@@ -144,19 +162,20 @@ export const updateSchoolData = async (
 
     throw error
   }
+
 }
 
-/* ---------------- PROCESS OFFLINE UPDATES ---------------- */
+/* ---------------- PROCESS OFFLINE QUEUE ---------------- */
 
 export const processPendingUpdates = async (): Promise<void> => {
 
-  const pendingRaw = localStorage.getItem("pendingUpdates")
+  if (!navigator.onLine) return
 
-  if (!pendingRaw) return
+  const updates = safeParse(
+    localStorage.getItem("pendingUpdates")
+  )
 
-  const updates = JSON.parse(pendingRaw)
-
-  if (!updates.length) return
+  if (!updates || !updates.length) return
 
   const remaining: any[] = []
 
@@ -171,6 +190,8 @@ export const processPendingUpdates = async (): Promise<void> => {
       )
 
     } catch (error) {
+
+      console.error("Retry failed:", error)
 
       remaining.push(item)
 
@@ -193,7 +214,7 @@ export const processPendingUpdates = async (): Promise<void> => {
 
 }
 
-/* ---------------- REALTIME LISTENER ---------------- */
+/* ---------------- REALTIME SUBSCRIBE ---------------- */
 
 export const subscribeToSchoolData = (
   callback: (data: SchoolData) => void,
@@ -201,6 +222,7 @@ export const subscribeToSchoolData = (
 ): Unsubscribe => {
 
   return onSnapshot(
+
     schoolConfigRef(),
 
     (docSnap) => {
@@ -210,6 +232,7 @@ export const subscribeToSchoolData = (
         callback(defaultSchoolData)
 
         return
+
       }
 
       const data = {
@@ -219,18 +242,13 @@ export const subscribeToSchoolData = (
 
       const json = JSON.stringify(data)
 
-      /* prevent duplicate UI updates */
+      /* avoid duplicate UI renders */
 
       if (json === lastSnapshot) return
 
       lastSnapshot = json
 
-      localStorage.setItem(
-        "schoolData",
-        JSON.stringify({
-          schoolName: data.schoolName
-        })
-      )
+      saveCache(data)
 
       callback(data)
 
@@ -238,23 +256,18 @@ export const subscribeToSchoolData = (
 
     (error) => {
 
-      console.error("Realtime subscription error:", error)
+      console.error("Realtime error:", error)
 
-      const cached = localStorage.getItem("schoolData")
+      const cached = safeParse(
+        localStorage.getItem("schoolData")
+      )
 
       if (cached) {
 
-        try {
-
-          callback({
-            ...defaultSchoolData,
-            ...JSON.parse(cached)
-          })
-
-        } catch {
-
-          callback(defaultSchoolData)
-        }
+        callback({
+          ...defaultSchoolData,
+          ...cached
+        })
 
       } else {
 
@@ -265,5 +278,7 @@ export const subscribeToSchoolData = (
       if (onError) onError(error)
 
     }
+
   )
+
 }
