@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   const isDev = mode === "development";
 
   return {
-    base: "./",   // ✅ FIX FOR CLOUDFLARE
+    base: "/",   // ✅ IMPORTANT FIX
 
     server: {
       host: true,
