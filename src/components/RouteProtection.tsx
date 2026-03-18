@@ -1,110 +1,190 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { isUserAdmin } from '@/utils/authUtils';
-import { useToast } from '@/hooks/use-toast';
-import { Shield } from 'lucide-react';
-import SessionTimeoutWarning from '@/components/security/SessionTimeoutWarning';
+import { useEffect, useState } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
+
+import { onAuthStateChanged, User, signOut } from "firebase/auth"
+import { auth } from "@/lib/firebase"
+
+import { isUserAdmin } from "@/utils/authUtils"
+import { canViewDashboard } from "@/utils/roleUtils"
+
+import { useToast } from "@/hooks/use-toast"
+
+import SessionTimeoutWarning from "@/components/security/SessionTimeoutWarning"
+
+import { Shield } from "lucide-react"
 
 const RouteProtection = ({ children }: { children: React.ReactNode }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { toast } = useToast();
-  
-  // State
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  // 1. GLOBAL AUTH LISTENER (Run once on mount)
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      try {
-        if (user) {
-          // User is logged in, check if they are an Admin
-          const adminStatus = await isUserAdmin(user.uid);
-          setIsAdmin(adminStatus);
-          setCurrentUser(user);
-        } else {
-          // User is logged out
-          setCurrentUser(null);
-          setIsAdmin(false);
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { toast } = useToast()
+
+  const [loading,setLoading] = useState(true)
+  const [user,setUser] = useState<User | null>(null)
+  const [role,setRole] = useState<string | null>(null)
+
+  /* ---------------- AUTH LISTENER ---------------- */
+
+  useEffect(()=>{
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async(firebaseUser)=>{
+
+        try{
+
+          if(firebaseUser){
+
+            const adminData = await isUserAdmin(firebaseUser.uid)
+
+            if(adminData){
+
+              setUser(firebaseUser)
+              setRole(adminData.role || "admin")
+
+            }else{
+
+              setUser(null)
+              setRole(null)
+
+            }
+
+          }else{
+
+            setUser(null)
+            setRole(null)
+
+          }
+
+        }catch(error){
+
+          console.error("Auth check failed:",error)
+
+          setUser(null)
+          setRole(null)
+
+        }finally{
+
+          setLoading(false)
+
         }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        setCurrentUser(null);
-        setIsAdmin(false);
-      } finally {
-        setIsLoading(false);
+
       }
-    });
+    )
 
-    return () => unsubscribe();
-  }, []);
+    return ()=>unsubscribe()
 
-  // 2. ROUTE GUARD LOGIC (Run when location, loading, or user changes)
-  useEffect(() => {
-    if (isLoading) return; // Wait for initial check to finish
+  },[])
 
-    const path = location.pathname;
-    const isAdminRoute = path.startsWith('/admin');
-    // Auth pages are Login OR Register
-    const isAuthPage = path === '/login' || path === '/admin/register'; 
+  /* ---------------- ROUTE GUARD ---------------- */
 
-    // SCENARIO A: User is logged in as Admin
-    if (currentUser && isAdmin) {
-      // If they try to go to Login or Register, send them to Dashboard
-      if (isAuthPage) {
-        navigate('/admin', { replace: true });
+  useEffect(()=>{
+
+    if(loading) return
+
+    const path = location.pathname
+
+    const isAdminRoute = path.startsWith("/admin")
+    const isAuthPage =
+      path === "/login" ||
+      path === "/admin/register"
+
+    /* USER NOT LOGGED IN */
+
+    if(!user){
+
+      if(isAdminRoute && !isAuthPage){
+
+        navigate("/login",{ replace:true })
+
       }
-      return;
+
+      return
+
     }
 
-    // SCENARIO B: User is logged in BUT NOT Admin (Pending or Rejected)
-    if (currentUser && !isAdmin) {
-      if (isAdminRoute && !isAuthPage) {
-        toast({
-          title: "Access Denied",
-          description: "Your account does not have admin privileges or is pending approval.",
-          variant: "destructive",
-        });
-        // Sign out to prevent stuck state
-        auth.signOut();
-        navigate('/login', { replace: true });
-      }
-      return;
+    /* USER LOGGED BUT NOT APPROVED ADMIN */
+
+    if(user && !role){
+
+      toast({
+        title:"Access Denied",
+        description:"Your admin account is pending approval.",
+        variant:"destructive"
+      })
+
+      signOut(auth)
+
+      navigate("/login",{ replace:true })
+
+      return
+
     }
 
-    // SCENARIO C: Not logged in (Public User)
-    if (!currentUser) {
-      // If trying to access protected Admin routes
-      if (isAdminRoute && !isAuthPage) {
-        navigate('/login', { replace: true, state: { from: location } });
-      }
+    /* ROLE PERMISSION */
+
+    if(role && !canViewDashboard(role)){
+
+      toast({
+        title:"Access Denied",
+        description:"You do not have permission to access this page.",
+        variant:"destructive"
+      })
+
+      navigate("/",{ replace:true })
+
+      return
+
     }
 
-  }, [isLoading, currentUser, isAdmin, location.pathname, navigate, toast]);
+    /* PREVENT LOGIN LOOP */
 
-  // 3. RENDER UI
-  if (isLoading) {
-    return (
+    if(isAuthPage){
+
+      navigate("/admin",{ replace:true })
+
+    }
+
+  },[user,role,loading,location.pathname,navigate,toast])
+
+  /* ---------------- LOADING SCREEN ---------------- */
+
+  if(loading){
+
+    return(
+
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
+
         <div className="text-center">
-          <Shield className="h-16 w-16 text-school-blue mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600 font-medium">Verifying security status...</p>
+
+          <Shield
+            className="h-16 w-16 text-school-blue mx-auto mb-4 animate-pulse"
+          />
+
+          <p className="text-gray-600 font-medium">
+            Verifying security status...
+          </p>
+
         </div>
+
       </div>
-    );
+
+    )
+
   }
 
-  return (
+  /* ---------------- RENDER ---------------- */
+
+  return(
+
     <>
       {children}
-      {/* Only show timeout warning if logged in */}
-      {currentUser && <SessionTimeoutWarning />}
-    </>
-  );
-};
 
-export default RouteProtection;
+      {user && <SessionTimeoutWarning />}
+    </>
+
+  )
+
+}
+
+export default RouteProtection
