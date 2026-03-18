@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+
 import { Shield, AlertTriangle, Activity, Clock } from "lucide-react"
 
 import { getRecentLoginActivities, LoginActivity } from "@/utils/loginActivityUtils"
@@ -28,7 +30,7 @@ const SecurityMonitor = () => {
 
     } catch (error) {
 
-      console.error("Failed to load security data:", error)
+      console.error("Security Monitor Error:", error)
 
       toast({
         title: "Security Data Error",
@@ -43,12 +45,12 @@ const SecurityMonitor = () => {
     }
   }
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
 
     if (status === "success") {
 
       return (
-        <Badge className="bg-green-500">
+        <Badge className="bg-green-500 text-white">
           Success
         </Badge>
       )
@@ -61,25 +63,23 @@ const SecurityMonitor = () => {
     )
   }
 
-  const formatDateTime = (isoString: string) => {
+  const formatDateTime = (isoString?: string) => {
+
+    if (!isoString) return "Unknown"
 
     try {
-
       return new Date(isoString).toLocaleString()
-
     } catch {
-
       return "Invalid Date"
-
     }
   }
 
   const recentFailures = loginActivities.filter(
-    (a) => a.status === "failed"
+    (a) => a?.status === "failed"
   ).length
 
   const recentSuccesses = loginActivities.filter(
-    (a) => a.status === "success"
+    (a) => a?.status === "success"
   ).length
 
   if (loading) {
@@ -99,7 +99,7 @@ const SecurityMonitor = () => {
 
         <CardContent>
 
-          <div className="text-center py-6">
+          <div className="flex justify-center py-8 text-gray-500">
             Loading security data...
           </div>
 
@@ -114,7 +114,7 @@ const SecurityMonitor = () => {
 
     <div className="space-y-6">
 
-      {/* STATS */}
+      {/* STATISTICS */}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
@@ -192,24 +192,26 @@ const SecurityMonitor = () => {
 
       </div>
 
-      {/* SECURITY WARNING */}
+      {/* SECURITY ALERT */}
 
       {recentFailures > 5 && (
 
-        <Alert>
+        <Alert className="border-red-500">
 
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="h-4 w-4 text-red-600" />
 
           <AlertDescription>
+
             High number of failed login attempts detected.  
-            Consider reviewing security measures.
+            Please review your system security.
+
           </AlertDescription>
 
         </Alert>
 
       )}
 
-      {/* LOGIN ACTIVITY */}
+      {/* LOGIN ACTIVITY LIST */}
 
       <Card>
 
@@ -237,7 +239,7 @@ const SecurityMonitor = () => {
               loginActivities.map((activity) => (
 
                 <div
-                  key={activity.id || activity.loginTime}
+                  key={activity?.id || activity?.loginTime}
                   className="flex items-center justify-between p-3 border rounded-lg"
                 >
 
@@ -246,20 +248,20 @@ const SecurityMonitor = () => {
                     <div className="flex items-center space-x-2">
 
                       <span className="font-medium">
-                        {activity.email}
+                        {activity?.email || "Unknown"}
                       </span>
 
-                      {getStatusBadge(activity.status)}
+                      {getStatusBadge(activity?.status)}
 
                     </div>
 
                     <div className="text-sm text-gray-500 mt-1">
 
                       <p>
-                        Time: {formatDateTime(activity.loginTime)}
+                        Time: {formatDateTime(activity?.loginTime)}
                       </p>
 
-                      {activity.failureReason && (
+                      {activity?.failureReason && (
 
                         <p className="text-red-600">
                           Reason: {activity.failureReason}
@@ -267,7 +269,7 @@ const SecurityMonitor = () => {
 
                       )}
 
-                      {activity.userAgent && (
+                      {activity?.userAgent && (
 
                         <p className="truncate max-w-md">
                           Device: {activity.userAgent}
