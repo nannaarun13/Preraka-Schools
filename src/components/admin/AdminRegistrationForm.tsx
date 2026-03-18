@@ -1,102 +1,166 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
-interface AdminRegistrationFormProps {
-  onSuccess?: () => void;
-}
+const AdminRegistrationForm = () => {
 
-const AdminRegistrationForm: React.FC<AdminRegistrationFormProps> = ({ onSuccess }) => {
+  const [step, setStep] = useState(1);
+
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     password: "",
+    confirmPassword: ""
   });
 
-  const [loading, setLoading] = useState(false);
+  const [emailOTP, setEmailOTP] = useState("");
+  const [phoneOTP, setPhoneOTP] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleChange = (e:any) => {
 
     setFormData({
       ...formData,
-      [name]: value,
+      [e.target.name]: e.target.value
     });
+
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendOTP = async () => {
 
-    setLoading(true);
+    // API call to send OTP
+    console.log("Send OTP to", formData.email, formData.phone);
 
-    try {
-      console.log("Admin Registration Data:", formData);
+    setStep(2);
 
-      // Here you can add Firebase registration later
+  };
 
-      if (onSuccess) {
-        onSuccess();
-      }
+  const verifyOTP = async () => {
 
-      alert("Admin registered successfully!");
-    } catch (error) {
-      console.error("Registration error:", error);
-      alert("Registration failed");
-    }
+    console.log("Verify OTP");
 
-    setLoading(false);
+    setStep(3);
+
+  };
+
+  const submitRegistration = async () => {
+
+    const data = {
+      ...formData,
+      status: "pending",
+      createdAt: new Date().toISOString()
+    };
+
+    console.log("Registration Request", data);
+
+    alert("Registration submitted. Waiting for admin approval.");
+
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold text-center mb-6">
+
+    <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow">
+
+      <h2 className="text-xl font-bold mb-6 text-center">
         Admin Registration
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* STEP 1 FORM */}
 
-        <Input
-          name="name"
-          placeholder="Admin Name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
+      {step === 1 && (
 
-        <Input
-          name="email"
-          type="email"
-          placeholder="Admin Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
+        <div className="space-y-4">
 
-        <Input
-          name="phone"
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={handleChange}
-          required
-        />
+          <div>
+            <Label>First Name</Label>
+            <Input name="firstName" onChange={handleChange}/>
+          </div>
 
-        <Input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
+          <div>
+            <Label>Last Name</Label>
+            <Input name="lastName" onChange={handleChange}/>
+          </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Registering..." : "Register Admin"}
-        </Button>
+          <div>
+            <Label>Email</Label>
+            <Input type="email" name="email" onChange={handleChange}/>
+          </div>
 
-      </form>
+          <div>
+            <Label>Indian Phone</Label>
+            <Input placeholder="+91XXXXXXXXXX" name="phone" onChange={handleChange}/>
+          </div>
+
+          <div>
+            <Label>Password</Label>
+            <Input type="password" name="password" onChange={handleChange}/>
+          </div>
+
+          <div>
+            <Label>Confirm Password</Label>
+            <Input type="password" name="confirmPassword" onChange={handleChange}/>
+          </div>
+
+          <Button onClick={sendOTP} className="w-full">
+            Send OTP
+          </Button>
+
+        </div>
+
+      )}
+
+      {/* STEP 2 OTP */}
+
+      {step === 2 && (
+
+        <div className="space-y-4">
+
+          <div>
+            <Label>Email OTP</Label>
+            <Input
+              value={emailOTP}
+              onChange={(e)=>setEmailOTP(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Mobile OTP</Label>
+            <Input
+              value={phoneOTP}
+              onChange={(e)=>setPhoneOTP(e.target.value)}
+            />
+          </div>
+
+          <Button onClick={verifyOTP} className="w-full">
+            Verify OTP
+          </Button>
+
+        </div>
+
+      )}
+
+      {/* STEP 3 SUBMIT */}
+
+      {step === 3 && (
+
+        <div className="space-y-4 text-center">
+
+          <p>OTP Verified Successfully</p>
+
+          <Button onClick={submitRegistration}>
+            Submit Registration
+          </Button>
+
+        </div>
+
+      )}
+
     </div>
+
   );
+
 };
 
 export default AdminRegistrationForm;
