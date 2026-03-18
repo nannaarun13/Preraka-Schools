@@ -1,63 +1,186 @@
-// src/utils/adminUtils.ts
-
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 /* =========================
    SUPER ADMIN CONFIG
 ========================= */
 
-export const DEFAULT_ADMIN = {
-  email: "arunnanna3@gmail.com",
-  firstName: "NANNA",
-  lastName: "ARUN",
-  phone: "+91 98480 47368",
-};
+const DEFAULT_ADMIN_EMAIL = "arunnanna3@gmail.com";
+
+/* =========================
+   ADMIN TYPES
+========================= */
+
+export interface AdminRecord {
+  uid: string;
+  email: string;
+  role: "super_admin" | "admin";
+  status: "approved" | "pending" | "rejected";
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  requestedAt?: any;
+  approvedAt?: any;
+  approvedBy?: string;
+}
 
 /* =========================
    ENSURE SUPER ADMIN
 ========================= */
 
-/**
- * Creates the super admin record if it does not already exist.
- * Must be called AFTER Firebase authentication.
- */
 export const ensureDefaultAdmin = async (
   uid: string,
   email?: string | null
 ): Promise<void> => {
-  if (!uid) return;
+  if (!uid || !email) return;
 
   try {
     const adminRef = doc(db, "admins", uid);
     const snapshot = await getDoc(adminRef);
 
-    // ✅ Already exists
     if (snapshot.exists()) return;
 
-    // 🔐 Allow auto-create ONLY for default admin email
-    const normalizedEmail =
-      typeof email === "string" ? email.toLowerCase() : "";
+    const normalizedEmail = email.toLowerCase();
 
-    if (normalizedEmail !== DEFAULT_ADMIN.email.toLowerCase()) {
+    if (normalizedEmail !== DEFAULT_ADMIN_EMAIL) {
+      console.warn("Unauthorized admin creation attempt");
       return;
     }
 
-    // 🔥 Create super admin
     await setDoc(adminRef, {
       uid,
-      email: DEFAULT_ADMIN.email,
-      firstName: DEFAULT_ADMIN.firstName,
-      lastName: DEFAULT_ADMIN.lastName,
-      phone: DEFAULT_ADMIN.phone,
+      email: normalizedEmail,
+      role: "super_admin",
       status: "approved",
-      requestedAt: new Date().toISOString(),
-      approvedAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
+      approvedAt: serverTimestamp(),
       approvedBy: "system",
     });
 
-    console.info("✅ Super admin created successfully");
-  } catch (err) {
-    console.error("❌ Failed to ensure super admin:", err);
+    console.info("Super admin initialized");
+  } catch (error) {
+    console.error("Failed to create super admin:", error);
+  }
+};
+
+/* =========================
+   CHECK IF USER IS ADMIN
+========================= */
+
+export const isUserAdmin = async (uid: string): Promise<boolean> => {
+  try {
+    const adminRef = doc(db, "admins", uid);
+    const snapshot = await getDoc(adminRef);
+
+    if (!snapshot.exists()) return false;
+
+    const data = snapshot.data() as AdminRecord;
+
+    return data.status === "approved";
+  } catch (error) {
+    console.error("Admin check failed:", error);
+    return false;
+  }
+};
+
+/* =========================
+   GET ADMIN ROLE
+========================= */
+
+export const getAdminRole = async (
+  uid: string
+): Promise<"super_admin" | "admin" | null> => {
+  try {
+    const adminRef = doc(db, "admins", uid);
+    const snapshot = await getDoc(adminRef);
+
+    if (!snapshot.exists()) return null;
+
+    const data = snapshot.data() as AdminRecord;
+
+    if (data.status !== "approved") return null;
+
+    return data.role;
+  } catch (error) {
+    console.error("Failed to get admin role:", error);
+    return null;
+  }
+};
+
+/* =========================
+   REQUEST ADMIN ACCESS
+========================= */
+
+export const requestAdminAccess = async (
+  uid: string,
+  email: string,
+  firstName: string,
+  lastName: string,
+  phone: string
+): Promise<void> => {
+  try {
+    const adminRef = doc(db, "admins", uid);
+
+    await setDoc(adminRef, {
+      uid,
+      email,
+      firstName,
+      lastName,
+      phone,
+      role: "admin",
+      status: "pending",
+      requestedAt: serverTimestamp(),
+    });
+
+    console.info("Admin access request submitted");
+  } catch (error) {
+    console.error("Failed to request admin access:", error);
+  }
+};
+
+/* =========================
+   APPROVE ADMIN (SUPER ADMIN)
+========================= */
+
+export const approveAdmin = async (
+  uid: string,
+  approvedBy: string
+): Promise<void> => {
+  try {
+    const adminRef = doc(db, "admins", uid);
+
+    await updateDoc(adminRef, {
+      status: "approved",
+      approvedAt: serverTimestamp(),
+      approvedBy,
+    });
+
+    console.info("Admin approved");
+  } catch (error) {
+    console.error("Failed to approve admin:", error);
+  }
+};
+
+/* =========================
+   REJECT ADMIN
+========================= */
+
+export const rejectAdmin = async (uid: string): Promise<void> => {
+  try {
+    const adminRef = doc(db, "admins", uid);
+
+    await updateDoc(adminRef, {
+      status: "rejected",
+    });
+
+    console.info("Admin rejected");
+  } catch (error) {
+    console.error("Failed to reject admin:", error);
   }
 };
