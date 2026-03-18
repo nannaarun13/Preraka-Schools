@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Proper __dirname support for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -11,7 +10,7 @@ export default defineConfig(({ mode }) => {
   const isDev = mode === "development";
 
   return {
-    base: "/Preraka-Schools/",
+    base: "/",   // ⭐ FIXED
 
     server: {
       host: true,
@@ -35,7 +34,6 @@ export default defineConfig(({ mode }) => {
 
       rollupOptions: {
         output: {
-          // Compatible with Vite 8 (function format)
           manualChunks(id) {
             if (id.includes("node_modules")) {
               return "vendor";
