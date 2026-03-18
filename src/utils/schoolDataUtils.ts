@@ -31,31 +31,47 @@ const safeParse = (value: string | null) => {
 
 }
 
+/* ---------------- SAFE STORAGE ---------------- */
+
+const isBrowser = () =>
+  typeof window !== "undefined"
+
 /* ---------------- CLEAN DATA ---------------- */
 
-const cleanData = (data: any) => {
+const cleanData = (data: Partial<SchoolData>) => {
 
-  const cleaned: any = {}
+  const cleaned: Partial<SchoolData> = {}
 
   Object.keys(data).forEach((key) => {
 
-    if (data[key] !== undefined) {
-      cleaned[key] = data[key]
+    const value = (data as any)[key]
+
+    if (value !== undefined) {
+      (cleaned as any)[key] = value
     }
 
   })
 
   return cleaned
+
 }
 
 /* ---------------- CACHE SAVE ---------------- */
 
 const saveCache = (data: SchoolData) => {
 
-  localStorage.setItem(
-    "schoolData",
-    JSON.stringify(data)
-  )
+  if (!isBrowser()) return
+
+  try {
+
+    localStorage.setItem(
+      "schoolData",
+      JSON.stringify(data)
+    )
+
+  } catch (error) {
+    console.warn("Cache save failed:", error)
+  }
 
 }
 
@@ -86,13 +102,19 @@ export const getSchoolData = async (): Promise<SchoolData> => {
 
     console.error("Error fetching school data:", error)
 
-    const cached = safeParse(localStorage.getItem("schoolData"))
+    if (isBrowser()) {
 
-    if (cached) {
-      return {
-        ...defaultSchoolData,
-        ...cached
+      const cached = safeParse(
+        localStorage.getItem("schoolData")
+      )
+
+      if (cached) {
+        return {
+          ...defaultSchoolData,
+          ...cached
+        }
       }
+
     }
 
     return defaultSchoolData
@@ -118,7 +140,9 @@ export const updateSchoolData = async (
       const current = snap.data()
 
       const changed = Object.keys(safeData).some(
-        key => JSON.stringify(current[key]) !== JSON.stringify(safeData[key])
+        key =>
+          JSON.stringify(current[key]) !==
+          JSON.stringify((safeData as any)[key])
       )
 
       if (!changed) {
@@ -140,11 +164,10 @@ export const updateSchoolData = async (
 
     console.error("Update failed, saving offline:", error)
 
-    const pending = safeParse(
-      localStorage.getItem("pendingUpdates")
-    ) || []
+    if (!isBrowser()) throw error
 
-    /* limit queue size */
+    const pending =
+      safeParse(localStorage.getItem("pendingUpdates")) || []
 
     if (pending.length > 50) {
       pending.shift()
@@ -169,7 +192,7 @@ export const updateSchoolData = async (
 
 export const processPendingUpdates = async (): Promise<void> => {
 
-  if (!navigator.onLine) return
+  if (!isBrowser() || !navigator.onLine) return
 
   const updates = safeParse(
     localStorage.getItem("pendingUpdates")
@@ -242,8 +265,6 @@ export const subscribeToSchoolData = (
 
       const json = JSON.stringify(data)
 
-      /* avoid duplicate UI renders */
-
       if (json === lastSnapshot) return
 
       lastSnapshot = json
@@ -258,22 +279,25 @@ export const subscribeToSchoolData = (
 
       console.error("Realtime error:", error)
 
-      const cached = safeParse(
-        localStorage.getItem("schoolData")
-      )
+      if (isBrowser()) {
 
-      if (cached) {
+        const cached = safeParse(
+          localStorage.getItem("schoolData")
+        )
 
-        callback({
-          ...defaultSchoolData,
-          ...cached
-        })
+        if (cached) {
 
-      } else {
+          callback({
+            ...defaultSchoolData,
+            ...cached
+          })
 
-        callback(defaultSchoolData)
+          return
+        }
 
       }
+
+      callback(defaultSchoolData)
 
       if (onError) onError(error)
 
