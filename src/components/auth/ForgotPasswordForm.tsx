@@ -12,6 +12,8 @@ import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react"
 
 import { handleForgotPassword, forgotPasswordSchema } from "@/utils/authUtils"
 
+import ForgotPasswordOTP from "@/components/auth/ForgotPasswordOTP"
+
 interface ForgotPasswordFormProps {
   onBackToLogin: () => void
 }
@@ -21,12 +23,39 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [useOTP, setUseOTP] = useState(false)
+
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: ""
     }
   })
+
+  /* SHOW OTP RESET SCREEN */
+
+  if (useOTP) {
+
+    return (
+      <div className="space-y-4">
+
+        <ForgotPasswordOTP />
+
+        <Button
+          variant="ghost"
+          className="w-full"
+          onClick={() => setUseOTP(false)}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4"/>
+          Back
+        </Button>
+
+      </div>
+    )
+
+  }
+
+  /* EMAIL RESET */
 
   const onSubmit = async (values: z.infer<typeof forgotPasswordSchema>) => {
 
@@ -45,7 +74,7 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
       if (err?.code === "auth/unauthorized-domain") {
 
         setError(
-          "This domain is not authorized in Firebase. Please add your website domain in Firebase Authentication settings."
+          "This domain is not authorized in Firebase Authentication settings."
         )
 
       } else if (err?.code === "auth/user-not-found") {
@@ -71,7 +100,7 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
       <div className="text-center space-y-4 animate-fade-in">
 
         <div className="flex justify-center">
-          <CheckCircle2 className="h-12 w-12 text-green-500" />
+          <CheckCircle2 className="h-12 w-12 text-green-500"/>
         </div>
 
         <h3 className="text-lg font-semibold text-gray-900">
@@ -79,8 +108,8 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
         </h3>
 
         <p className="text-sm text-gray-600">
-          We have sent a password reset link to
-          <br />
+          Password reset link sent to
+          <br/>
           <strong>{form.getValues("email")}</strong>
         </p>
 
@@ -138,7 +167,7 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
 
         {form.formState.isSubmitting ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
             Sending...
           </>
         ) : (
@@ -147,13 +176,24 @@ const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
 
       </Button>
 
+      {/* NEW OTP OPTION */}
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={() => setUseOTP(true)}
+      >
+        Reset using Phone OTP
+      </Button>
+
       <Button
         type="button"
         variant="ghost"
         className="w-full"
         onClick={onBackToLogin}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
+        <ArrowLeft className="mr-2 h-4 w-4"/>
         Back to Login
       </Button>
 
