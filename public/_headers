@@ -1,6 +1,8 @@
-cat <<EOF > public/_headers
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Content-Security-Policy: frame-ancestors 'none'
+<<<<<<< HEAD
 EOF
+=======
+>>>>>>> 3c3365d (fix headers)
