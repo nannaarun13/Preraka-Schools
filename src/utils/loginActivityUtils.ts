@@ -6,6 +6,7 @@ import {
   limit,
   getDocs,
 } from "firebase/firestore";
+
 import { auth, db } from "@/lib/firebase";
 
 /* =======================
@@ -13,7 +14,7 @@ import { auth, db } from "@/lib/firebase";
 ======================= */
 
 export interface LoginActivity {
-  adminId?: string; // Optional for failed logins
+  adminId?: string;
   email: string;
   loginTime: string;
   ipAddress: string;
@@ -26,10 +27,18 @@ export interface LoginActivity {
    HELPERS
 ======================= */
 
-// Fetch public IP
+// Fetch public IP with timeout
 const getPublicIP = async (): Promise<string> => {
   try {
-    const response = await fetch("https://api.ipify.org?format=json");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch("https://api.ipify.org?format=json", {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
     if (response.ok) {
       const data = await response.json();
       return data.ip;
@@ -37,12 +46,14 @@ const getPublicIP = async (): Promise<string> => {
   } catch {
     // ignore
   }
+
   return "unknown";
 };
 
 // Sanitize generic strings
 const sanitizeString = (input: unknown, maxLength = 500): string => {
   if (!input || typeof input !== "string") return "unknown";
+
   return input
     .replace(/<[^>]*>/g, "")
     .replace(/[<>'"&`]/g, "")
@@ -50,9 +61,10 @@ const sanitizeString = (input: unknown, maxLength = 500): string => {
     .substring(0, maxLength);
 };
 
-// Sanitize and validate email
+// Sanitize email
 const sanitizeEmail = (email: string): string => {
   if (!email || typeof email !== "string") return "";
+
   const cleaned = email.toLowerCase().trim();
 
   const emailRegex =
@@ -61,12 +73,21 @@ const sanitizeEmail = (email: string): string => {
   if (!emailRegex.test(cleaned) || cleaned.length > 100) {
     return "";
   }
+
   return cleaned;
 };
 
-// Get client info
+// Get client info (SSR safe)
 const getSecureClientInfo = async () => {
   try {
+
+    if (typeof window === "undefined") {
+      return {
+        ipAddress: "server",
+        userAgent: "server",
+      };
+    }
+
     const userAgent = navigator.userAgent || "unknown";
     const ipAddress = await getPublicIP();
 
@@ -74,8 +95,11 @@ const getSecureClientInfo = async () => {
       ipAddress: sanitizeString(ipAddress, 50),
       userAgent: sanitizeString(userAgent, 500),
     };
+
   } catch (error) {
+
     console.error("Error getting client info:", error);
+
     return {
       ipAddress: "unknown",
       userAgent: "unknown",
@@ -84,21 +108,41 @@ const getSecureClientInfo = async () => {
 };
 
 /* =======================
-   LOGGING FUNCTIONS
+   RATE LIMIT (CLIENT)
 ======================= */
 
-// Log successful admin login
+let lastLogTime = 0;
+
+const shouldLog = () => {
+  const now = Date.now();
+
+  if (now - lastLogTime < 2000) {
+    return false;
+  }
+
+  lastLogTime = now;
+  return true;
+};
+
+/* =======================
+   LOG SUCCESS LOGIN
+======================= */
+
 export const logAdminLogin = async (
   adminId: string,
   email: string
 ): Promise<void> => {
+
   try {
-    if (!adminId) return;
+
+    if (!adminId || !shouldLog()) return;
 
     const sanitizedEmail = sanitizeEmail(email);
+
     if (!sanitizedEmail) return;
 
     const currentUser = auth.currentUser;
+
     if (!currentUser || currentUser.email?.toLowerCase() !== sanitizedEmail) {
       console.warn("Login logging skipped: user mismatch");
       return;
@@ -107,11 +151,14 @@ export const logAdminLogin = async (
     const clientInfo = await getSecureClientInfo();
 
     const loginActivity: LoginActivity = {
+
       adminId: sanitizeString(adminId, 100),
       email: sanitizedEmail,
       loginTime: new Date().toISOString(),
+
       ipAddress: clientInfo.ipAddress,
       userAgent: clientInfo.userAgent,
+
       status: "success",
     };
 
@@ -119,27 +166,38 @@ export const logAdminLogin = async (
       collection(db, "admin_login_activities"),
       loginActivity
     );
+
   } catch (error) {
     console.error("Failed to log admin login:", error);
   }
 };
 
-// Log failed admin login
+/* =======================
+   LOG FAILED LOGIN
+======================= */
+
 export const logFailedAdminLogin = async (
   email: string,
   reason: string
 ): Promise<void> => {
+
   try {
+
+    if (!shouldLog()) return;
+
     const sanitizedEmail = sanitizeEmail(email);
-    const sanitizedReason = sanitizeString(reason, 500);
+    const sanitizedReason = sanitizeString(reason, 300);
 
     const clientInfo = await getSecureClientInfo();
 
     const loginActivity: LoginActivity = {
-      email: sanitizedEmail || "invalid-email-format",
+
+      email: sanitizedEmail || "invalid-email",
       loginTime: new Date().toISOString(),
+
       ipAddress: clientInfo.ipAddress,
       userAgent: clientInfo.userAgent,
+
       status: "failed",
       failureReason: sanitizedReason,
     };
@@ -148,16 +206,22 @@ export const logFailedAdminLogin = async (
       collection(db, "admin_login_activities"),
       loginActivity
     );
+
   } catch (error) {
     console.error("Failed to log failed admin login:", error);
   }
 };
 
-// Fetch recent login activities
+/* =======================
+   FETCH RECENT LOGINS
+======================= */
+
 export const getRecentLoginActivities = async (
   limitCount = 10
 ): Promise<LoginActivity[]> => {
+
   try {
+
     const q = query(
       collection(db, "admin_login_activities"),
       orderBy("loginTime", "desc"),
@@ -165,9 +229,15 @@ export const getRecentLoginActivities = async (
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => doc.data() as LoginActivity);
+
+    return snapshot.docs.map(
+      (doc) => doc.data() as LoginActivity
+    );
+
   } catch (error) {
+
     console.error("Failed to fetch login activities:", error);
+
     return [];
   }
 };
