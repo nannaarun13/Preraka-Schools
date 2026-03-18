@@ -1,57 +1,132 @@
-export const exportToExcel = (data: any[], filename: string) => {
-  if (!data || data.length === 0) {
-    console.warn("No data available to export.");
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+/* =========================
+   NORMALIZE DATA
+========================= */
+
+export const normalizeData = (data: any[] | any) => {
+  if (!data) return [];
+  return Array.isArray(data) ? data : [data];
+};
+
+/* =========================
+   FORMAT HEADERS
+========================= */
+
+export const formatHeaders = (data: any[]) => {
+  return data.map((row) => {
+    const formattedRow: any = {};
+
+    Object.keys(row).forEach((key) => {
+      const formattedKey = key
+        .replace(/([A-Z])/g, " $1")
+        .replace(/^./, (str) => str.toUpperCase());
+
+      formattedRow[formattedKey] = row[key];
+    });
+
+    return formattedRow;
+  });
+};
+
+/* =========================
+   EXPORT EXCEL
+========================= */
+
+export const exportToExcel = (data: any[] | any, fileName: string) => {
+  const normalized = normalizeData(data);
+
+  if (normalized.length === 0) {
+    console.warn("No data to export");
     return;
   }
 
   try {
-    // Extract headers
-    const headers = Object.keys(data[0]);
+    const formatted = formatHeaders(normalized);
 
-    // Convert rows
-    const rows = data.map((row) =>
-      headers.map((header) => {
-        let value = row[header];
+    const worksheet = XLSX.utils.json_to_sheet(formatted);
 
-        if (value === null || value === undefined) value = "";
+    const workbook = XLSX.utils.book_new();
 
-        // Convert objects / arrays to string
-        if (typeof value === "object") {
-          value = JSON.stringify(value);
-        }
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
 
-        // Escape quotes
-        return `"${value.toString().replace(/"/g, '""')}"`;
-      })
-    );
-
-    // Create CSV content
-    const csvContent =
-      "\uFEFF" + // BOM for Excel UTF-8 support
-      [
-        headers.join(","), // header row
-        ...rows.map((row) => row.join(",")),
-      ].join("\n");
-
-    // Create file
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
     });
 
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
 
-    link.href = url;
-    link.download = `${filename}.csv`;
-
-    document.body.appendChild(link);
-    link.click();
-
-    document.body.removeChild(link);
-
-    // cleanup memory
-    URL.revokeObjectURL(url);
+    saveAs(blob, `${fileName}.xlsx`);
   } catch (error) {
     console.error("Excel export failed:", error);
+  }
+};
+
+/* =========================
+   EXPORT CSV
+========================= */
+
+export const exportToCSV = (data: any[] | any, fileName: string) => {
+  const normalized = normalizeData(data);
+
+  if (normalized.length === 0) return;
+
+  const headers = Object.keys(normalized[0]);
+
+  const rows = normalized.map((row) =>
+    headers
+      .map((header) => {
+        const value = row[header] ?? "";
+        return `"${value.toString().replace(/"/g, '""')}"`;
+      })
+      .join(",")
+  );
+
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  saveAs(blob, `${fileName}.csv`);
+};
+
+/* =========================
+   EXPORT MULTIPLE SHEETS
+========================= */
+
+export const exportMultipleSheets = (
+  sheets: { sheetName: string; data: any[] }[],
+  fileName: string
+) => {
+  if (!sheets || sheets.length === 0) return;
+
+  try {
+    const workbook = XLSX.utils.book_new();
+
+    sheets.forEach((sheet) => {
+      const formatted = formatHeaders(normalizeData(sheet.data));
+
+      const worksheet = XLSX.utils.json_to_sheet(formatted);
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheet.sheetName);
+    });
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, `${fileName}.xlsx`);
+  } catch (error) {
+    console.error("Multi-sheet export failed:", error);
   }
 };
