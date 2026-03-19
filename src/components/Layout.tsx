@@ -6,7 +6,7 @@ import Footer from './Footer';
 import { useSchool } from '@/contexts/SchoolContext';
 
 // ✅ NEW
-import AdminLayout from '@/layouts/AdminLayout';
+import AdminLayout from '@/components/ui/layout';
 
 const Layout = () => {
   const location = useLocation();
