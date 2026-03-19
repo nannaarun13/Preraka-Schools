@@ -23,40 +23,39 @@ const ContentManager = () => {
   const [generalContent, setGeneralContent] = useState({
     schoolName: "",
     schoolLogo: "",
-    welcomeMessage: "",
-
-    // ✅ NEW FIELDS
-    welcomeImage: "",
     schoolNameImage: "",
+    welcomeMessage: "",
+    welcomeImage: "",
 
-    email: "",
-    phone: "",
-    address: ""
+    // ✅ NEW ABOUT PAGE DATA
+    history: "",
+    about: "",
+    mission: "",
+    vision: ""
   })
 
-  /* ---------------- SYNC CONTEXT DATA ---------------- */
+  /* ---------------- SYNC ---------------- */
 
   useEffect(() => {
 
     if (!state?.data) return
 
     setGeneralContent({
-      schoolName: state?.data?.schoolName || "",
-      schoolLogo: state?.data?.schoolLogo || "",
-      welcomeMessage: state?.data?.welcomeMessage || "",
+      schoolName: state.data.schoolName || "",
+      schoolLogo: state.data.schoolLogo || "",
+      schoolNameImage: state.data.schoolNameImage || "",
+      welcomeMessage: state.data.welcomeMessage || "",
+      welcomeImage: state.data.welcomeImage || "",
 
-      // ✅ NEW SYNC
-      welcomeImage: state?.data?.welcomeImage || "",
-      schoolNameImage: state?.data?.schoolNameImage || "",
-
-      email: state?.data?.email || "",
-      phone: state?.data?.phone || "",
-      address: state?.data?.address || ""
+      history: state.data.history || "",
+      about: state.data.about || "",
+      mission: state.data.mission || "",
+      vision: state.data.vision || ""
     })
 
-  }, [state?.data])
+  }, [state.data])
 
-  /* ---------------- HANDLE INPUT ---------------- */
+  /* ---------------- INPUT ---------------- */
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -64,13 +63,13 @@ const ContentManager = () => {
 
     const { name, value } = e.target
 
-    setGeneralContent((prev) => ({
+    setGeneralContent(prev => ({
       ...prev,
       [name]: value
     }))
   }
 
-  /* ---------------- SAVE DATA ---------------- */
+  /* ---------------- SAVE ---------------- */
 
   const handleSave = async () => {
 
@@ -82,25 +81,20 @@ const ContentManager = () => {
 
       toast({
         title: "Content Updated",
-        description: "School content saved successfully."
+        description: "Saved successfully"
       })
 
     } catch (error) {
 
-      console.error(error)
-
       toast({
-        title: "Save Failed",
-        description: "Could not save your changes.",
+        title: "Error",
+        description: "Failed to save",
         variant: "destructive"
       })
 
     } finally {
-
       setIsSaving(false)
-
     }
-
   }
 
   /* ---------------- UI ---------------- */
@@ -109,97 +103,71 @@ const ContentManager = () => {
 
     <div className="space-y-6">
 
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">
-          Content Management
-        </h2>
-      </div>
+      <h2 className="text-xl font-semibold text-gray-800">
+        Content Management
+      </h2>
 
       <Tabs defaultValue="general" className="space-y-6">
 
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="flex gap-2 bg-gray-100 p-2 rounded-lg">
           <TabsTrigger value="general">General Content</TabsTrigger>
           <TabsTrigger value="updates">Latest Updates</TabsTrigger>
           <TabsTrigger value="founders">Founders</TabsTrigger>
         </TabsList>
 
-        {/* GENERAL CONTENT */}
+        {/* ================= GENERAL ================= */}
 
         <TabsContent value="general">
 
-          <Card>
+          <Card className="max-w-4xl mx-auto rounded-xl shadow-md border">
 
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>General School Content</CardTitle>
 
-              <div className="flex items-center justify-between">
-
-                <CardTitle>General School Content</CardTitle>
-
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="bg-school-blue hover:bg-school-blue/90"
-                >
-
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Changes
-                    </>
-                  )}
-
-                </Button>
-
-              </div>
-
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <Loader2 className="animate-spin w-4 h-4 mr-2" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save
+              </Button>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
 
-              {/* SCHOOL LOGO */}
+              {/* LOGO + NAME */}
+              <div className="grid md:grid-cols-2 gap-6">
 
-              <ImageUpload
-                label="School Logo"
-                currentImage={generalContent.schoolLogo}
-                onImageUpload={(url) =>
-                  setGeneralContent((prev) => ({
-                    ...prev,
-                    schoolLogo: url
-                  }))
-                }
-              />
-
-              {/* ✅ NEW: SCHOOL NAME IMAGE */}
-
-              <ImageUpload
-                label="School Name Image (Optional)"
-                currentImage={generalContent.schoolNameImage}
-                onImageUpload={(url) =>
-                  setGeneralContent((prev) => ({
-                    ...prev,
-                    schoolNameImage: url
-                  }))
-                }
-              />
-
-              {/* SCHOOL NAME */}
-
-              <div>
-                <Label>School Name</Label>
-                <Input
-                  name="schoolName"
-                  value={generalContent.schoolName}
-                  onChange={handleInputChange}
+                <ImageUpload
+                  label="School Logo"
+                  currentImage={generalContent.schoolLogo}
+                  onImageUpload={(url) =>
+                    setGeneralContent(prev => ({ ...prev, schoolLogo: url }))
+                  }
                 />
+
+                <div>
+                  <Label>School Name</Label>
+                  <Input
+                    name="schoolName"
+                    value={generalContent.schoolName}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
               </div>
 
-              {/* WELCOME MESSAGE */}
+              {/* NAME IMAGE */}
+              <ImageUpload
+                label="School Name Image"
+                currentImage={generalContent.schoolNameImage}
+                onImageUpload={(url) =>
+                  setGeneralContent(prev => ({ ...prev, schoolNameImage: url }))
+                }
+              />
 
+              {/* WELCOME */}
               <div>
                 <Label>Welcome Message</Label>
                 <Input
@@ -209,49 +177,48 @@ const ContentManager = () => {
                 />
               </div>
 
-              {/* ✅ NEW: WELCOME BACKGROUND IMAGE */}
-
               <ImageUpload
                 label="Welcome Background Image"
                 currentImage={generalContent.welcomeImage}
                 onImageUpload={(url) =>
-                  setGeneralContent((prev) => ({
-                    ...prev,
-                    welcomeImage: url
-                  }))
+                  setGeneralContent(prev => ({ ...prev, welcomeImage: url }))
                 }
               />
 
-              {/* EMAIL */}
+              {/* ================= ABOUT PAGE DATA ================= */}
 
               <div>
-                <Label>Email</Label>
-                <Input
-                  name="email"
-                  value={generalContent.email}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              {/* PHONE */}
-
-              <div>
-                <Label>Phone</Label>
-                <Input
-                  name="phone"
-                  value={generalContent.phone}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              {/* ADDRESS */}
-
-              <div>
-                <Label>Address</Label>
+                <Label>Our History</Label>
                 <Textarea
-                  name="address"
-                  rows={3}
-                  value={generalContent.address}
+                  name="history"
+                  value={generalContent.history}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div>
+                <Label>About Content</Label>
+                <Textarea
+                  name="about"
+                  value={generalContent.about}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div>
+                <Label>Mission Statement</Label>
+                <Textarea
+                  name="mission"
+                  value={generalContent.mission}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div>
+                <Label>Vision Statement</Label>
+                <Textarea
+                  name="vision"
+                  value={generalContent.vision}
                   onChange={handleInputChange}
                 />
               </div>
@@ -262,13 +229,11 @@ const ContentManager = () => {
 
         </TabsContent>
 
-        {/* LATEST UPDATES */}
+        {/* ================= OTHER TABS ================= */}
 
         <TabsContent value="updates">
           <LatestUpdatesManager />
         </TabsContent>
-
-        {/* FOUNDERS */}
 
         <TabsContent value="founders">
           <FoundersManager />
