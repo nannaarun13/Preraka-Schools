@@ -12,6 +12,9 @@ import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 import { handleLogin, loginSchema } from '@/utils/authUtils';
 
+// ✅ ADD THIS
+import { useNavigate } from 'react-router-dom';
+
 interface LoginFormProps {
   onForgotPassword: () => void;
   onRegisterClick: () => void;
@@ -22,6 +25,9 @@ const LoginForm = ({ onForgotPassword, onRegisterClick, onHomeClick }: LoginForm
 
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // ✅ ADD THIS
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -37,7 +43,12 @@ const LoginForm = ({ onForgotPassword, onRegisterClick, onHomeClick }: LoginForm
 
     try {
 
-      await handleLogin(values);
+      const user = await handleLogin(values);
+
+      console.log("LOGIN SUCCESS:", user); // ✅ debug
+
+      // ✅ ADD THIS (MAIN FIX)
+      navigate('/admin'); // change if your route is different
 
     } catch (err: any) {
 
