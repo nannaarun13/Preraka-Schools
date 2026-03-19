@@ -5,6 +5,9 @@ import Navigation from './Navigation';
 import Footer from './Footer';
 import { useSchool } from '@/contexts/SchoolContext';
 
+// ✅ NEW
+import AdminLayout from '@/layouts/AdminLayout';
+
 const Layout = () => {
   const location = useLocation();
   const { dispatch } = useSchool();
@@ -20,12 +23,21 @@ const Layout = () => {
     }
   }, [location.pathname]);
 
-  // ✅ ADMIN / LOGIN (NO HEADER / FOOTER)
-  if (isAdminPage || isLoginPage) {
+  // ✅ LOGIN PAGE (NO HEADER / FOOTER)
+  if (isLoginPage) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Outlet />
       </div>
+    );
+  }
+
+  // ✅ ADMIN WITH SIDEBAR (NEW)
+  if (isAdminPage) {
+    return (
+      <AdminLayout>
+        <Outlet />
+      </AdminLayout>
     );
   }
 
@@ -39,7 +51,7 @@ const Layout = () => {
       {/* NAVBAR */}
       <Navigation />
 
-      {/* ✅ ONLY CONTENT HAS BACKGROUND */}
+      {/* CONTENT */}
       <main className="flex-1 page-background">
         <Outlet />
       </main>
