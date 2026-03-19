@@ -14,8 +14,23 @@ import {
 const Navigation = () => {
   const { state } = useSchool();
 
-  const navigationItems = state?.data?.navigationItems || [];
-  const schoolName = state?.data?.name || "School Name";
+  // ✅ FIX: Default navigation items
+  const defaultItems = [
+    { name: "Home", path: "/", visible: true },
+    { name: "About", path: "/about", visible: true },
+    { name: "Admissions", path: "/admissions", visible: true },
+    { name: "Gallery", path: "/gallery", visible: true },
+    { name: "Notice Board", path: "/notice-board", visible: true },
+    { name: "Contact", path: "/contact", visible: true },
+    { name: "Login", path: "/login", visible: true },
+  ];
+
+  const navigationItems =
+    state?.data?.navigationItems?.length > 0
+      ? state.data.navigationItems
+      : defaultItems;
+
+  const schoolName = state?.data?.schoolName || "Preraka Schools";
 
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
