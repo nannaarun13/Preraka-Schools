@@ -1,7 +1,12 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  /* --- Shadcn UI & Base Colors --- */
+/* =========================
+   ROOT VARIABLES
+========================= */
+:root {
+  /* Base Colors */
   --color-background: hsl(0 0% 98%);
   --color-foreground: hsl(222.2 84% 4.9%);
 
@@ -32,7 +37,7 @@
 
   --radius-lg: 0.5rem;
 
-  /* --- Preraka Custom Brand Colors --- */
+  /* Custom Brand */
   --color-school-blue: hsl(220 91% 50%);
   --color-school-orange: hsl(25 95% 53%);
   --color-school-white: hsl(0 0% 100%);
@@ -40,89 +45,111 @@
   --color-school-orange-light: hsl(25 95% 95%);
   --color-school-blue-dark: hsl(220 91% 40%);
   --color-school-orange-dark: hsl(25 95% 45%);
-
-  /* --- Custom Animations --- */
-  --animate-fade-in: fadeIn 0.6s ease-in-out;
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 }
 
-/* --- Base Styles --- */
+/* =========================
+   BASE STYLES
+========================= */
 @layer base {
-  *, ::after, ::before {
+  *, ::before, ::after {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, 
-      var(--color-school-white) 0%, 
-      var(--color-school-blue-light) 25%, 
-      var(--color-school-white) 50%, 
-      var(--color-school-orange-light) 75%, 
-      var(--color-school-white) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--color-school-white) 0%,
+      var(--color-school-blue-light) 25%,
+      var(--color-school-white) 50%,
+      var(--color-school-orange-light) 75%,
+      var(--color-school-white) 100%
+    );
     min-height: 100vh;
   }
 }
 
-/* --- Custom Utilities --- */
-@utility school-gradient {
-  background: linear-gradient(135deg, var(--color-school-blue) 0%, var(--color-school-orange) 100%);
+/* =========================
+   CUSTOM UTILITIES
+========================= */
+@layer utilities {
+  .school-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--color-school-blue) 0%,
+      var(--color-school-orange) 100%
+    );
+  }
+
+  .school-gradient-light {
+    background: linear-gradient(
+      135deg,
+      var(--color-school-blue-light) 0%,
+      var(--color-school-orange-light) 100%
+    );
+  }
+
+  .page-background {
+    background: linear-gradient(
+      135deg,
+      var(--color-school-white) 0%,
+      var(--color-school-blue-light) 20%,
+      var(--color-school-white) 40%,
+      var(--color-school-orange-light) 60%,
+      var(--color-school-white) 80%,
+      var(--color-school-blue-light) 100%
+    );
+  }
+
+  .embed-map-responsive {
+    position: relative;
+    text-align: right;
+    width: 100%;
+    height: 0;
+    padding-bottom: 75%;
+  }
+
+  .embed-map-container {
+    overflow: hidden;
+    background: none !important;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .embed-map-frame {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: none;
+  }
 }
 
-@utility school-gradient-light {
-  background: linear-gradient(135deg, var(--color-school-blue-light) 0%, var(--color-school-orange-light) 100%);
+/* =========================
+   ANIMATION
+========================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-@utility page-background {
-  background: linear-gradient(135deg, 
-    var(--color-school-white) 0%, 
-    var(--color-school-blue-light) 20%, 
-    var(--color-school-white) 40%, 
-    var(--color-school-orange-light) 60%, 
-    var(--color-school-white) 80%, 
-    var(--color-school-blue-light) 100%);
+.fade-in {
+  animation: fadeIn 0.6s ease-in-out;
 }
 
-@utility embed-map-responsive {
-  position: relative;
-  text-align: right;
-  width: 100%;
-  height: 0;
-  padding-bottom: 75%;
-}
-
-@utility embed-map-container {
-  overflow: hidden;
-  background: none !important;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-@utility embed-map-frame {
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute;
-  top: 0;
-  left: 0;
-  border: none;
-}
-
-/* --- Dark Mode Overrides --- */
-@variant dark (&:where(.dark, .dark *));
-
+/* =========================
+   DARK MODE
+========================= */
 .dark {
   --color-background: hsl(220 15% 8%);
   --color-foreground: hsl(210 40% 98%);
