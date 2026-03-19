@@ -3,7 +3,14 @@
 @tailwind utilities;
 
 /* =========================
-   ROOT VARIABLES (FIXED)
+   GLOBAL HEIGHT FIX (CRITICAL)
+========================= */
+html, body, #root {
+  height: 100%;
+}
+
+/* =========================
+   ROOT VARIABLES
 ========================= */
 :root {
   --color-background: 0 0% 98%;
@@ -12,42 +19,23 @@
   --color-card: 0 0% 100%;
   --color-card-foreground: 222.2 84% 4.9%;
 
-  --color-popover: 0 0% 100%;
-  --color-popover-foreground: 222.2 84% 4.9%;
-
   --color-primary: 220 91% 50%;
-  --color-primary-foreground: 0 0% 100%;
-
   --color-secondary: 25 95% 53%;
-  --color-secondary-foreground: 0 0% 100%;
 
   --color-muted: 220 14% 96%;
   --color-muted-foreground: 220 8% 46%;
 
-  --color-accent: 25 95% 53%;
-  --color-accent-foreground: 0 0% 100%;
-
-  --color-destructive: 0 84.2% 60.2%;
-  --color-destructive-foreground: 210 40% 98%;
-
   --color-border: 220 13% 91%;
-  --color-input: 220 13% 91%;
-  --color-ring: 220 91% 50%;
 
-  --radius-lg: 0.5rem;
-
-  /* Brand */
+  /* Brand Colors */
   --color-school-blue: 220 91% 50%;
   --color-school-orange: 25 95% 53%;
-  --color-school-white: 0 0% 100%;
   --color-school-blue-light: 220 91% 95%;
   --color-school-orange-light: 25 95% 95%;
-  --color-school-blue-dark: 220 91% 40%;
-  --color-school-orange-dark: 25 95% 45%;
 }
 
 /* =========================
-   BASE STYLES
+   BASE STYLES (FIXED)
 ========================= */
 @layer base {
   *, ::before, ::after {
@@ -56,31 +44,18 @@
 
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(
-      135deg,
-      hsl(var(--color-school-white)) 0%,
-      hsl(var(--color-school-blue-light)) 25%,
-      hsl(var(--color-school-white)) 50%,
-      hsl(var(--color-school-orange-light)) 75%,
-      hsl(var(--color-school-white)) 100%
-    );
-    min-height: 100vh;
+    margin: 0;
+    overflow-x: hidden;
   }
 }
 
 /* =========================
-   UTILITIES
+   BACKGROUND UTILITIES
 ========================= */
 @layer utilities {
-  .school-gradient {
-    background: linear-gradient(
-      135deg,
-      hsl(var(--color-school-blue)) 0%,
-      hsl(var(--color-school-orange)) 100%
-    );
-  }
 
-  .school-gradient-light {
+  /* Main site gradient (use this instead of body background) */
+  .page-background {
     background: linear-gradient(
       135deg,
       hsl(var(--color-school-blue-light)) 0%,
@@ -88,38 +63,15 @@
     );
   }
 
-  .page-background {
+  /* Header / CTA gradient */
+  .school-gradient {
     background: linear-gradient(
-      135deg,
-      hsl(var(--color-school-white)) 0%,
-      hsl(var(--color-school-blue-light)) 20%,
-      hsl(var(--color-school-white)) 40%,
-      hsl(var(--color-school-orange-light)) 60%,
-      hsl(var(--color-school-white)) 80%,
-      hsl(var(--color-school-blue-light)) 100%
+      to right,
+      hsl(var(--color-school-blue)),
+      hsl(var(--color-school-orange))
     );
   }
 
-  .embed-map-responsive {
-    position: relative;
-    width: 100%;
-    height: 0;
-    padding-bottom: 75%;
-  }
-
-  .embed-map-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  .embed-map-frame {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
 }
 
 /* =========================
@@ -138,20 +90,4 @@
 
 .fade-in {
   animation: fadeIn 0.6s ease-in-out;
-}
-
-/* =========================
-   DARK MODE (FIXED)
-========================= */
-.dark {
-  --color-background: 220 15% 8%;
-  --color-foreground: 210 40% 98%;
-  --color-card: 220 15% 10%;
-  --color-card-foreground: 210 40% 98%;
-  --color-primary: 220 91% 60%;
-  --color-secondary: 25 95% 63%;
-  --color-muted: 217.2 32.6% 17.5%;
-  --color-muted-foreground: 215 20.2% 65.1%;
-  --color-border: 217.2 32.6% 17.5%;
-  --color-ring: 220 91% 60%;
 }
