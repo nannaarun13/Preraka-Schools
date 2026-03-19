@@ -9,14 +9,14 @@ const Index = () => {
 
   const { welcomeMessage, schoolLogo, galleryImages } = state.data;
 
-  const welcomeImage = state.data.welcomeImage;
-  const latestUpdates = state.data.latestUpdates || [];
+  const welcomeImage = state?.data?.welcomeImage;
+  const latestUpdates = state?.data?.latestUpdates || [];
 
   return (
-    <div className="bg-white">
+    <div className="w-full">
 
-      {/* ✅ HERO FIXED (NO h-screen) */}
-      <section className="relative min-h-[80vh] flex items-center justify-center">
+      {/* ✅ HERO FIXED */}
+      <section className="relative py-24 flex items-center justify-center">
 
         {/* Background */}
         <div
@@ -48,7 +48,7 @@ const Index = () => {
           </div>
 
           {/* Text */}
-          <h2 className="text-4xl md:text-6xl font-bold mb-4">
+          <h2 className="text-4xl md:text-6xl font-bold">
             {welcomeMessage || "Welcome to Preraka Schools"}
           </h2>
 
@@ -69,7 +69,7 @@ const Index = () => {
               <Card key={update.id} className="hover:shadow-lg bg-white border">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-3">
-                    <Badge className="bg-school-orange text-white px-3 py-1">
+                    <Badge className="bg-orange-500 text-white px-3 py-1">
                       New
                     </Badge>
                     <div>
