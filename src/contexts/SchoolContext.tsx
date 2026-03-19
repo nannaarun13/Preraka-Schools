@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react"
-import { Loader2 } from "lucide-react"
 import { subscribeToSchoolData, updateSchoolData } from "@/utils/schoolDataUtils"
 
 /* ---------------- TYPES ---------------- */
@@ -67,9 +66,11 @@ export interface SchoolData {
   welcomeImage?: string
   schoolNameImage?: string
 
-  email: string
-  phone: string
-  address: string
+  // ✅ ABOUT PAGE FIELDS
+  history?: string
+  about?: string
+  mission?: string
+  vision?: string
 
   notices: Notice[]
   galleryImages: GalleryImage[]
@@ -84,7 +85,6 @@ export interface SchoolData {
 
 interface SchoolState {
   data: SchoolData
-  loading: boolean
 }
 
 /* ---------------- ACTIONS ---------------- */
@@ -92,14 +92,6 @@ interface SchoolState {
 type SchoolAction =
   | { type: "SET_DATA"; payload: SchoolData }
   | { type: "UPDATE_SCHOOL_DATA"; payload: Partial<SchoolData> }
-  | { type: "ADD_NOTICE"; payload: Notice }
-  | { type: "DELETE_NOTICE"; payload: string }
-  | { type: "ADD_GALLERY_IMAGE"; payload: GalleryImage }
-  | { type: "DELETE_GALLERY_IMAGE"; payload: string }
-  | { type: "ADD_LATEST_UPDATE"; payload: LatestUpdate }
-  | { type: "DELETE_LATEST_UPDATE"; payload: string }
-  | { type: "ADD_FOUNDER"; payload: Founder }
-  | { type: "DELETE_FOUNDER"; payload: string }
 
 /* ---------------- DEFAULT DATA ---------------- */
 
@@ -111,9 +103,10 @@ export const defaultSchoolData: SchoolData = {
   welcomeImage: "",
   schoolNameImage: "",
 
-  email: "info@school.edu",
-  phone: "+91 9876543210",
-  address: "",
+  history: "",
+  about: "",
+  mission: "",
+  vision: "",
 
   notices: [],
   galleryImages: [],
@@ -131,11 +124,6 @@ export const defaultSchoolData: SchoolData = {
   }
 }
 
-const initialState: SchoolState = {
-  data: defaultSchoolData,
-  loading: true
-}
-
 /* ---------------- REDUCER ---------------- */
 
 const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState => {
@@ -148,8 +136,7 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
         data: {
           ...defaultSchoolData,
           ...action.payload
-        },
-        loading: false
+        }
       }
 
     case "UPDATE_SCHOOL_DATA":
@@ -190,17 +177,20 @@ export const useSchool = () => {
 
 export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
-  const [state, dispatch] = useReducer(schoolReducer, initialState)
+  // ✅ INSTANT LOAD (NO DELAY)
+  const [state, dispatch] = useReducer(schoolReducer, {
+    data: defaultSchoolData
+  })
 
   useEffect(() => {
 
-    console.log("🔥 Subscribing to Firestore...") // ✅ NEW
+    console.log("🔥 Firestore subscription started")
 
     const unsubscribe = subscribeToSchoolData(
 
       (data) => {
 
-        console.log("✅ Firestore Data:", data) // ✅ NEW
+        console.log("✅ Firestore Data:", data)
 
         dispatch({
           type: "SET_DATA",
@@ -213,36 +203,20 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       },
 
       (error) => {
-
         console.error("❌ Firestore error:", error)
-
-        dispatch({
-          type: "SET_DATA",
-          payload: defaultSchoolData
-        })
-
       }
 
     )
 
-    // ✅ NEW: FAILSAFE (prevents infinite loading)
-    const timeout = setTimeout(() => {
-      console.warn("⚠️ Firestore timeout, using default data")
-      dispatch({
-        type: "SET_DATA",
-        payload: defaultSchoolData
-      })
-    }, 5000)
-
     return () => {
       if (unsubscribe) unsubscribe()
-      clearTimeout(timeout)
     }
 
   }, [])
 
   const updateData = async (payload: Partial<SchoolData>) => {
 
+    // ✅ Instant UI update
     dispatch({
       type: "UPDATE_SCHOOL_DATA",
       payload
@@ -255,37 +229,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }
 
-  /* LOADING SCREEN */
-
-  if (state.loading) {
-
-    return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-white">
-
-        <Loader2 className="h-10 w-10 animate-spin text-blue-500 mb-4" />
-
-        {/* ✅ NEW TEXT */}
-        <p className="text-gray-600">Loading school data...</p>
-
-      </div>
-    )
-
-  }
-
   return (
-
-    <SchoolContext.Provider
-      value={{
-        state,
-        dispatch,
-        updateData
-      }}
-    >
-
+    <SchoolContext.Provider value={{ state, dispatch, updateData }}>
       {children}
-
     </SchoolContext.Provider>
-
   )
-
 }
