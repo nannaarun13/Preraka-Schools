@@ -4,28 +4,29 @@ import Header from './Header';
 import Navigation from './Navigation';
 import Footer from './Footer';
 import { useSchool } from '@/contexts/SchoolContext';
-// FIX: Use absolute import for safety and consistency
 import SecurityHeadersEnhanced from '@/components/security/SecurityHeadersEnhanced';
 
 const Layout = () => {
   const location = useLocation();
   const { dispatch } = useSchool();
-  
-  // Logic to hide public layout components
-  const isAdminPage = location.pathname.startsWith('/admin');
-  const isLoginPage = location.pathname === '/login';
-  
+
+  // ✅ FIX: Works correctly with HashRouter
+  const fullPath = location.pathname + location.hash;
+
+  const isAdminPage = fullPath.includes('/admin');
+  const isLoginPage = fullPath.includes('/login');
+
   useEffect(() => {
-    // FIX: Always scroll to top when route changes (Critical for UX)
+    // Scroll to top on route change
     window.scrollTo(0, 0);
 
-    // Increment visitor count only on public pages
+    // Increment visitors only for public pages
     if (!isAdminPage && !isLoginPage) {
       dispatch({ type: 'INCREMENT_VISITORS' });
     }
   }, [location.pathname, dispatch, isAdminPage, isLoginPage]);
 
-  // 1. Admin & Login Layout (No Header/Footer)
+  // ✅ Admin & Login layout (NO header/footer)
   if (isAdminPage || isLoginPage) {
     return (
       <>
@@ -37,17 +38,26 @@ const Layout = () => {
     );
   }
 
-  // 2. Public Website Layout
+  // ✅ Public website layout (Header + Navbar + Footer)
   return (
     <>
       <SecurityHeadersEnhanced />
       <div className="min-h-screen bg-white flex flex-col">
+
+        {/* HEADER */}
         <Header />
+
+        {/* NAVIGATION */}
         <Navigation />
+
+        {/* MAIN CONTENT */}
         <main className="flex-1">
           <Outlet />
         </main>
+
+        {/* FOOTER */}
         <Footer />
+
       </div>
     </>
   );
