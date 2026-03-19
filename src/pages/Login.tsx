@@ -1,48 +1,81 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import LoginForm from '@/components/auth/LoginForm';
-import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
+import { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase"; // adjust if path different
 
-type LoginMode = 'login' | 'forgot-password';
+const LoginForm = ({ onForgotPassword, onRegisterClick, onHomeClick }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const Login = () => {
-  const navigate = useNavigate();
-  const [mode, setMode] = useState<LoginMode>('login');
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    console.log("LOGIN CLICKED"); // 🔥 debug
+
+    setLoading(true);
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      console.log("SUCCESS:", userCredential);
+
+      alert("Login successful ✅");
+
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
+      alert(error.message); // 🔥 IMPORTANT
+    }
+
+    setLoading(false);
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-school-blue-light to-school-orange-light p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Shield className="h-16 w-16 text-school-blue mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-school-blue mb-2">
-            {mode === 'login' ? 'Admin Login' : 'Reset Password'}
-          </h1>
-          <p className="text-gray-600">Preraka Schools The Change of Schools</p>
-        </div>
-        
-        <Card className="shadow-lg border-t-4 border-t-school-blue">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center text-school-blue">
-              {mode === 'login' ? 'Sign In' : 'Password Recovery'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {mode === 'login' ? (
-              <LoginForm
-                onForgotPassword={() => setMode('forgot-password')}
-                onRegisterClick={() => navigate('/admin/register')}
-                onHomeClick={() => navigate('/')}
-              />
-            ) : (
-              <ForgotPasswordForm onBackToLogin={() => setMode('login')} />
-            )}
-          </CardContent>
-        </Card>
+    <form onSubmit={handleLogin} className="space-y-4">
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="w-full p-2 border rounded"
+        required
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="w-full p-2 border rounded"
+        required
+      />
+
+      <button
+        type="submit"
+        className="w-full bg-blue-600 text-white p-2 rounded"
+        disabled={loading}
+      >
+        {loading ? "Signing in..." : "Sign In"}
+      </button>
+
+      <div className="flex justify-between text-sm">
+        <button type="button" onClick={onForgotPassword}>
+          Forgot password?
+        </button>
+
+        <button type="button" onClick={onRegisterClick}>
+          Register
+        </button>
       </div>
-    </div>
+
+      <button type="button" onClick={onHomeClick} className="w-full text-sm">
+        Back to Home
+      </button>
+    </form>
   );
 };
 
-export default Login;
+export default LoginForm;
