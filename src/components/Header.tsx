@@ -1,4 +1,3 @@
-
 import { useSchool } from '@/contexts/SchoolContext';
 
 const Header = () => {
@@ -9,11 +8,21 @@ const Header = () => {
     <header className="bg-gradient-to-r from-school-blue via-school-blue to-school-orange text-white py-6 shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-center space-x-4">
-          <img 
-            src={schoolLogo} 
-            alt="School Logo" 
-            className="h-16 w-16 object-contain bg-white rounded-full p-1"
-          />
+
+          {/* ✅ FIXED LOGO */}
+          {schoolLogo ? (
+            <img 
+              src={schoolLogo} 
+              alt="School Logo" 
+              className="h-16 w-16 object-contain bg-white rounded-full p-1 shadow-md"
+            />
+          ) : (
+            <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center text-blue-600 font-bold text-xl shadow-md">
+              PS
+            </div>
+          )}
+
+          {/* School Name */}
           <div className="text-center">
             {schoolNameImage ? (
               <img 
@@ -27,6 +36,7 @@ const Header = () => {
               </h1>
             )}
           </div>
+
         </div>
       </div>
     </header>
