@@ -6,18 +6,19 @@ import { useNavigate } from 'react-router-dom';
 const Index = () => {
   const { state } = useSchool();
   const navigate = useNavigate();
+
   const { welcomeMessage, schoolLogo, galleryImages } = state.data;
 
-  const welcomeImage = state.data.welcomeImage; // ✅ FIXED
+  const welcomeImage = state.data.welcomeImage;
   const latestUpdates = state.data.latestUpdates || [];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white">
 
-      {/* ✅ HERO FIXED */}
-      <section className="relative h-screen flex items-center justify-center">
+      {/* ✅ HERO FIXED (NO h-screen) */}
+      <section className="relative min-h-[80vh] flex items-center justify-center">
 
-        {/* ✅ Background FIX */}
+        {/* Background */}
         <div
           className="absolute inset-0"
           style={{
@@ -33,7 +34,7 @@ const Index = () => {
         {/* Content */}
         <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
 
-          {/* ✅ Logo FIX */}
+          {/* Logo */}
           <div className="bg-white rounded-full p-4 mb-6 mx-auto w-32 h-32 flex items-center justify-center shadow-xl">
             {schoolLogo ? (
               <img 
@@ -54,6 +55,7 @@ const Index = () => {
         </div>
       </section>
 
+      {/* CONTENT */}
       <div className="container mx-auto px-4 py-16 space-y-16">
 
         {/* Latest Updates */}
@@ -67,10 +69,16 @@ const Index = () => {
               <Card key={update.id} className="hover:shadow-lg bg-white border">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-3">
-                    <Badge className="bg-school-orange text-white px-3 py-1">New</Badge>
+                    <Badge className="bg-school-orange text-white px-3 py-1">
+                      New
+                    </Badge>
                     <div>
-                      <p className="text-gray-700 font-medium">{update.content}</p>
-                      <p className="text-sm text-gray-500 mt-2">{update.date}</p>
+                      <p className="text-gray-700 font-medium">
+                        {update.content}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        {update.date}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -86,7 +94,7 @@ const Index = () => {
           </h3>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-            {galleryImages.slice(0, 6).map((image) => (
+            {galleryImages?.slice(0, 6)?.map((image) => (
               <Card key={image.id} className="overflow-hidden hover:shadow-lg bg-white border">
                 <div className="h-48 overflow-hidden">
                   <img
@@ -107,7 +115,10 @@ const Index = () => {
 
         {/* CTA */}
         <section className="text-center bg-gradient-to-r from-blue-500 to-orange-500 text-white py-16 px-8 rounded-lg shadow-lg">
-          <h3 className="text-3xl font-bold mb-4">Join Our School Community</h3>
+          <h3 className="text-3xl font-bold mb-4">
+            Join Our School Community
+          </h3>
+
           <p className="text-xl mb-8 opacity-90">
             Discover excellence in education with our dedicated faculty and modern facilities
           </p>
@@ -115,13 +126,15 @@ const Index = () => {
           <div className="space-x-4">
             <button 
               onClick={() => navigate('/admissions')}
-              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100">
+              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100"
+            >
               Apply Now
             </button>
 
             <button 
               onClick={() => navigate('/about')}
-              className="border-2 border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600">
+              className="border-2 border-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600"
+            >
               Learn More
             </button>
           </div>
