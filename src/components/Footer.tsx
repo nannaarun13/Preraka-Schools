@@ -3,60 +3,58 @@ import { MapPin, Phone, Mail, MapPinIcon } from 'lucide-react';
 
 const Footer = () => {
   const { state } = useSchool();
-  const { contactInfo } = state.data;
 
-  // Defaults (used if Admin Panel data is empty)
-  const defaultAddress = 'Raghavendra Nagar, Turkayamjal, Hyderabad, telangana - 501510';
-  const defaultEmail = 'info@Prerakastaff@gmail.com';
-  
-  // Safe Accessors
+  // ✅ SAFE ACCESS (IMPORTANT FIX)
+  const contactInfo = state?.data?.contactInfo || {};
+
+  // Defaults
+  const defaultAddress = 'Raghavendra Nagar, Turkayamjal, Hyderabad, Telangana - 501510';
+  const defaultEmail = 'info@prerakaschools.com';
+
   const contactNumbers = contactInfo?.contactNumbers || [];
   const address = contactInfo?.address || defaultAddress;
   const email = contactInfo?.email || defaultEmail;
 
   const handleMapClick = () => {
-    // Dynamically generate a Google Maps Search Link based on the address
     const query = encodeURIComponent(address);
-    // Uses the official Google Maps API for searching (works on mobile & desktop)
     const mapUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
     window.open(mapUrl, '_blank');
   };
 
   return (
-    <footer className="bg-school-blue text-white py-12 print:hidden">
+    <footer className="bg-gradient-to-r from-school-blue to-school-orange text-white py-12 print:hidden">
       <div className="container mx-auto px-4">
+
         <div className="grid md:grid-cols-4 gap-8">
-          
+
           {/* Address */}
           <div>
             <div className="flex items-start space-x-3 mb-4">
-              <MapPin className="h-6 w-6 mt-1 flex-shrink-0 text-school-orange" />
+              <MapPin className="h-6 w-6 mt-1 text-school-orange" />
               <div>
                 <h4 className="font-semibold text-lg mb-2">Address</h4>
-                <p className="text-sm opacity-90 whitespace-pre-line leading-relaxed hover:text-school-orange transition-colors">
+                <p className="text-sm opacity-90 leading-relaxed">
                   {address}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Phone Numbers */}
+          {/* Phone */}
           <div>
             <div className="flex items-start space-x-3 mb-4">
-              <Phone className="h-6 w-6 mt-1 flex-shrink-0 text-school-orange" />
+              <Phone className="h-6 w-6 mt-1 text-school-orange" />
               <div>
-                <h4 className="font-semibold text-lg mb-2">Phone Numbers</h4>
-                <div className="space-y-1">
-                  {contactNumbers.length > 0 ? (
-                    contactNumbers.map((contact) => (
-                      <p key={contact.id} className="text-sm opacity-90">
-                        {contact.number}
-                      </p>
-                    ))
-                  ) : (
-                    <p className="text-sm opacity-90">+91 98765 43210</p>
-                  )}
-                </div>
+                <h4 className="font-semibold text-lg mb-2">Phone</h4>
+                {contactNumbers.length > 0 ? (
+                  contactNumbers.map((contact) => (
+                    <p key={contact.id} className="text-sm opacity-90">
+                      {contact.number}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-sm opacity-90">+91 98765 43210</p>
+                )}
               </div>
             </div>
           </div>
@@ -64,27 +62,27 @@ const Footer = () => {
           {/* Email */}
           <div>
             <div className="flex items-start space-x-3 mb-4">
-              <Mail className="h-6 w-6 mt-1 flex-shrink-0 text-school-orange" />
+              <Mail className="h-6 w-6 mt-1 text-school-orange" />
               <div>
                 <h4 className="font-semibold text-lg mb-2">Email</h4>
-                <a href={`mailto:${email}`} className="text-sm opacity-90 hover:text-school-orange transition-colors">
+                <a href={`mailto:${email}`} className="text-sm opacity-90 hover:text-school-orange">
                   {email}
                 </a>
               </div>
             </div>
           </div>
 
-          {/* Location Button */}
+          {/* Map */}
           <div>
             <div className="flex items-start space-x-3 mb-4">
-              <MapPinIcon className="h-6 w-6 mt-1 flex-shrink-0 text-school-orange" />
+              <MapPinIcon className="h-6 w-6 mt-1 text-school-orange" />
               <div>
                 <h4 className="font-semibold text-lg mb-2">Location</h4>
-                <button 
+                <button
                   onClick={handleMapClick}
-                  className="bg-school-orange text-white px-6 py-2 rounded shadow-md hover:bg-white hover:text-school-orange transition-all duration-300 text-sm font-bold border border-transparent hover:border-school-orange"
+                  className="bg-school-orange px-6 py-2 rounded font-bold text-sm hover:bg-white hover:text-school-orange transition"
                 >
-                  View on Google Maps
+                  View Map
                 </button>
               </div>
             </div>
@@ -93,11 +91,12 @@ const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="text-center mt-12 pt-6 border-t border-white/10">
+        <div className="text-center mt-12 pt-6 border-t border-white/20">
           <p className="text-sm opacity-70">
             © {new Date().getFullYear()} Preraka Schools. All rights reserved.
           </p>
         </div>
+
       </div>
     </footer>
   );
