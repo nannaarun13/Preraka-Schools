@@ -9,7 +9,7 @@ import {
 import { db } from "@/lib/firebase"
 import { SchoolData, defaultSchoolData } from "@/contexts/SchoolContext"
 
-/* ---------------- FIRESTORE DOC ---------------- */
+/* ---------------- FIRESTORE REF ---------------- */
 
 const schoolConfigRef = () => doc(db, "school", "config")
 
@@ -17,70 +17,90 @@ const schoolConfigRef = () => doc(db, "school", "config")
 
 let lastSnapshot = ""
 
-/* ---------------- SAFE JSON PARSE ---------------- */
+/* ---------------- SAFE PARSE ---------------- */
 
 const safeParse = (value: string | null) => {
-
   if (!value) return null
-
   try {
     return JSON.parse(value)
   } catch {
     return null
   }
-
 }
 
-/* ---------------- SAFE STORAGE ---------------- */
+/* ---------------- CHECK BROWSER ---------------- */
 
-const isBrowser = () =>
-  typeof window !== "undefined"
+const isBrowser = () => typeof window !== "undefined"
 
 /* ---------------- CLEAN DATA ---------------- */
 
 const cleanData = (data: Partial<SchoolData>) => {
-
   const cleaned: Partial<SchoolData> = {}
 
   Object.keys(data).forEach((key) => {
-
     const value = (data as any)[key]
-
     if (value !== undefined) {
-      (cleaned as any)[key] = value
+      ;(cleaned as any)[key] = value
     }
-
   })
 
   return cleaned
-
 }
 
-/* ---------------- CACHE SAVE ---------------- */
+/* ---------------- REMOVE HEAVY FIELDS ---------------- */
+
+const removeHeavyFields = (data: SchoolData) => {
+  const clone = JSON.parse(JSON.stringify(data))
+
+  // ❌ REMOVE LARGE FIELDS (IMPORTANT)
+  delete clone.gallery
+  delete clone.images
+  delete clone.students
+  delete clone.files
+  delete clone.largeData
+
+  return clone
+}
+
+/* ---------------- SAVE CACHE (SAFE) ---------------- */
 
 const saveCache = (data: SchoolData) => {
-
   if (!isBrowser()) return
 
   try {
+    const lightData = removeHeavyFields(data)
 
-    localStorage.setItem(
-      "schoolData",
-      JSON.stringify(data)
-    )
+    const size = JSON.stringify(lightData).length
 
+    // ✅ Prevent storage overflow
+    if (size > 200000) {
+      console.warn("Skipping cache: too large")
+      return
+    }
+
+    localStorage.setItem("schoolData", JSON.stringify(lightData))
   } catch (error) {
     console.warn("Cache save failed:", error)
   }
-
 }
 
 /* ---------------- GET SCHOOL DATA ---------------- */
 
 export const getSchoolData = async (): Promise<SchoolData> => {
 
-  try {
+  // ✅ 1. Load from cache (FAST)
+  if (isBrowser()) {
+    const cached = safeParse(localStorage.getItem("schoolData"))
+    if (cached) {
+      return {
+        ...defaultSchoolData,
+        ...cached
+      }
+    }
+  }
 
+  // ✅ 2. Load from Firestore
+  try {
     const docSnap = await getDoc(schoolConfigRef())
 
     if (docSnap.exists()) {
@@ -93,34 +113,14 @@ export const getSchoolData = async (): Promise<SchoolData> => {
       saveCache(data)
 
       return data
-
     }
 
     return defaultSchoolData
 
   } catch (error) {
-
     console.error("Error fetching school data:", error)
-
-    if (isBrowser()) {
-
-      const cached = safeParse(
-        localStorage.getItem("schoolData")
-      )
-
-      if (cached) {
-        return {
-          ...defaultSchoolData,
-          ...cached
-        }
-      }
-
-    }
-
     return defaultSchoolData
-
   }
-
 }
 
 /* ---------------- UPDATE SCHOOL DATA ---------------- */
@@ -149,7 +149,6 @@ export const updateSchoolData = async (
         console.log("No changes detected. Skipping update.")
         return
       }
-
     }
 
     await setDoc(
@@ -169,7 +168,8 @@ export const updateSchoolData = async (
     const pending =
       safeParse(localStorage.getItem("pendingUpdates")) || []
 
-    if (pending.length > 50) {
+    // ✅ Limit queue size
+    if (pending.length > 20) {
       pending.shift()
     }
 
@@ -185,7 +185,6 @@ export const updateSchoolData = async (
 
     throw error
   }
-
 }
 
 /* ---------------- PROCESS OFFLINE QUEUE ---------------- */
@@ -203,38 +202,26 @@ export const processPendingUpdates = async (): Promise<void> => {
   const remaining: any[] = []
 
   for (const item of updates) {
-
     try {
-
       await setDoc(
         schoolConfigRef(),
         cleanData(item.data),
         { merge: true }
       )
-
     } catch (error) {
-
       console.error("Retry failed:", error)
-
       remaining.push(item)
-
     }
-
   }
 
   if (remaining.length) {
-
     localStorage.setItem(
       "pendingUpdates",
       JSON.stringify(remaining)
     )
-
   } else {
-
     localStorage.removeItem("pendingUpdates")
-
   }
-
 }
 
 /* ---------------- REALTIME SUBSCRIBE ---------------- */
@@ -251,11 +238,8 @@ export const subscribeToSchoolData = (
     (docSnap) => {
 
       if (!docSnap.exists()) {
-
         callback(defaultSchoolData)
-
         return
-
       }
 
       const data = {
@@ -265,14 +249,21 @@ export const subscribeToSchoolData = (
 
       const json = JSON.stringify(data)
 
+      // ✅ Prevent repeated updates
       if (json === lastSnapshot) return
+
+      // ✅ Prevent large data crash
+      if (json.length > 500000) {
+        console.warn("Skipping large realtime update")
+        callback(defaultSchoolData)
+        return
+      }
 
       lastSnapshot = json
 
       saveCache(data)
 
       callback(data)
-
     },
 
     (error) => {
@@ -286,23 +277,18 @@ export const subscribeToSchoolData = (
         )
 
         if (cached) {
-
           callback({
             ...defaultSchoolData,
             ...cached
           })
-
           return
         }
-
       }
 
       callback(defaultSchoolData)
 
       if (onError) onError(error)
-
     }
 
   )
-
 }
