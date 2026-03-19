@@ -57,10 +57,17 @@ export interface ContactInfo {
   mapEmbed?: string
 }
 
+/* ✅ UPDATED SCHOOL DATA */
+
 export interface SchoolData {
   schoolName: string
   schoolLogo: string
   welcomeMessage: string
+
+  // ✅ NEW FIELDS (IMPORTANT)
+  welcomeImage?: string
+  schoolNameImage?: string
+
   email: string
   phone: string
   address: string
@@ -101,6 +108,11 @@ export const defaultSchoolData: SchoolData = {
   schoolName: "Preraka Schools",
   schoolLogo: "",
   welcomeMessage: "Welcome to Preraka Schools",
+
+  // ✅ NEW DEFAULTS
+  welcomeImage: "",
+  schoolNameImage: "",
+
   email: "info@school.edu",
   phone: "+91 9876543210",
   address: "",
@@ -239,7 +251,6 @@ const SchoolContext = createContext<{
 /* ---------------- HOOK ---------------- */
 
 export const useSchool = () => {
-
   const context = useContext(SchoolContext)
 
   if (!context) {
@@ -263,7 +274,10 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         dispatch({
           type: "SET_DATA",
-          payload: data || defaultSchoolData
+          payload: {
+            ...defaultSchoolData,
+            ...data
+          }
         })
 
       },
@@ -289,6 +303,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const updateData = async (payload: Partial<SchoolData>) => {
 
+    // ✅ Optimistic UI update
     dispatch({
       type: "UPDATE_SCHOOL_DATA",
       payload
@@ -310,13 +325,9 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   if (state.loading) {
 
     return (
-
       <div className="fixed inset-0 flex items-center justify-center bg-white">
-
         <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-
       </div>
-
     )
 
   }
