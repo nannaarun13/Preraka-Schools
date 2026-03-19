@@ -3,48 +3,47 @@
 @tailwind utilities;
 
 /* =========================
-   ROOT VARIABLES
+   ROOT VARIABLES (FIXED)
 ========================= */
 :root {
-  /* Base Colors */
-  --color-background: hsl(0 0% 98%);
-  --color-foreground: hsl(222.2 84% 4.9%);
+  --color-background: 0 0% 98%;
+  --color-foreground: 222.2 84% 4.9%;
 
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222.2 84% 4.9%);
+  --color-card: 0 0% 100%;
+  --color-card-foreground: 222.2 84% 4.9%;
 
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222.2 84% 4.9%);
+  --color-popover: 0 0% 100%;
+  --color-popover-foreground: 222.2 84% 4.9%;
 
-  --color-primary: hsl(220 91% 50%);
-  --color-primary-foreground: hsl(0 0% 100%);
+  --color-primary: 220 91% 50%;
+  --color-primary-foreground: 0 0% 100%;
 
-  --color-secondary: hsl(25 95% 53%);
-  --color-secondary-foreground: hsl(0 0% 100%);
+  --color-secondary: 25 95% 53%;
+  --color-secondary-foreground: 0 0% 100%;
 
-  --color-muted: hsl(220 14% 96%);
-  --color-muted-foreground: hsl(220 8% 46%);
+  --color-muted: 220 14% 96%;
+  --color-muted-foreground: 220 8% 46%;
 
-  --color-accent: hsl(25 95% 53%);
-  --color-accent-foreground: hsl(0 0% 100%);
+  --color-accent: 25 95% 53%;
+  --color-accent-foreground: 0 0% 100%;
 
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-destructive: 0 84.2% 60.2%;
+  --color-destructive-foreground: 210 40% 98%;
 
-  --color-border: hsl(220 13% 91%);
-  --color-input: hsl(220 13% 91%);
-  --color-ring: hsl(220 91% 50%);
+  --color-border: 220 13% 91%;
+  --color-input: 220 13% 91%;
+  --color-ring: 220 91% 50%;
 
   --radius-lg: 0.5rem;
 
-  /* Custom Brand */
-  --color-school-blue: hsl(220 91% 50%);
-  --color-school-orange: hsl(25 95% 53%);
-  --color-school-white: hsl(0 0% 100%);
-  --color-school-blue-light: hsl(220 91% 95%);
-  --color-school-orange-light: hsl(25 95% 95%);
-  --color-school-blue-dark: hsl(220 91% 40%);
-  --color-school-orange-dark: hsl(25 95% 45%);
+  /* Brand */
+  --color-school-blue: 220 91% 50%;
+  --color-school-orange: 25 95% 53%;
+  --color-school-white: 0 0% 100%;
+  --color-school-blue-light: 220 91% 95%;
+  --color-school-orange-light: 25 95% 95%;
+  --color-school-blue-dark: 220 91% 40%;
+  --color-school-orange-dark: 25 95% 45%;
 }
 
 /* =========================
@@ -59,72 +58,66 @@
     @apply bg-background text-foreground;
     background: linear-gradient(
       135deg,
-      var(--color-school-white) 0%,
-      var(--color-school-blue-light) 25%,
-      var(--color-school-white) 50%,
-      var(--color-school-orange-light) 75%,
-      var(--color-school-white) 100%
+      hsl(var(--color-school-white)) 0%,
+      hsl(var(--color-school-blue-light)) 25%,
+      hsl(var(--color-school-white)) 50%,
+      hsl(var(--color-school-orange-light)) 75%,
+      hsl(var(--color-school-white)) 100%
     );
     min-height: 100vh;
   }
 }
 
 /* =========================
-   CUSTOM UTILITIES
+   UTILITIES
 ========================= */
 @layer utilities {
   .school-gradient {
     background: linear-gradient(
       135deg,
-      var(--color-school-blue) 0%,
-      var(--color-school-orange) 100%
+      hsl(var(--color-school-blue)) 0%,
+      hsl(var(--color-school-orange)) 100%
     );
   }
 
   .school-gradient-light {
     background: linear-gradient(
       135deg,
-      var(--color-school-blue-light) 0%,
-      var(--color-school-orange-light) 100%
+      hsl(var(--color-school-blue-light)) 0%,
+      hsl(var(--color-school-orange-light)) 100%
     );
   }
 
   .page-background {
     background: linear-gradient(
       135deg,
-      var(--color-school-white) 0%,
-      var(--color-school-blue-light) 20%,
-      var(--color-school-white) 40%,
-      var(--color-school-orange-light) 60%,
-      var(--color-school-white) 80%,
-      var(--color-school-blue-light) 100%
+      hsl(var(--color-school-white)) 0%,
+      hsl(var(--color-school-blue-light)) 20%,
+      hsl(var(--color-school-white)) 40%,
+      hsl(var(--color-school-orange-light)) 60%,
+      hsl(var(--color-school-white)) 80%,
+      hsl(var(--color-school-blue-light)) 100%
     );
   }
 
   .embed-map-responsive {
     position: relative;
-    text-align: right;
     width: 100%;
     height: 0;
     padding-bottom: 75%;
   }
 
   .embed-map-container {
-    overflow: hidden;
-    background: none !important;
-    width: 100%;
-    height: 100%;
     position: absolute;
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
   }
 
   .embed-map-frame {
-    width: 100% !important;
-    height: 100% !important;
-    position: absolute;
-    top: 0;
-    left: 0;
+    width: 100%;
+    height: 100%;
     border: none;
   }
 }
@@ -148,17 +141,17 @@
 }
 
 /* =========================
-   DARK MODE
+   DARK MODE (FIXED)
 ========================= */
 .dark {
-  --color-background: hsl(220 15% 8%);
-  --color-foreground: hsl(210 40% 98%);
-  --color-card: hsl(220 15% 10%);
-  --color-card-foreground: hsl(210 40% 98%);
-  --color-primary: hsl(220 91% 60%);
-  --color-secondary: hsl(25 95% 63%);
-  --color-muted: hsl(217.2 32.6% 17.5%);
-  --color-muted-foreground: hsl(215 20.2% 65.1%);
-  --color-border: hsl(217.2 32.6% 17.5%);
-  --color-ring: hsl(220 91% 60%);
+  --color-background: 220 15% 8%;
+  --color-foreground: 210 40% 98%;
+  --color-card: 220 15% 10%;
+  --color-card-foreground: 210 40% 98%;
+  --color-primary: 220 91% 60%;
+  --color-secondary: 25 95% 63%;
+  --color-muted: 217.2 32.6% 17.5%;
+  --color-muted-foreground: 215 20.2% 65.1%;
+  --color-border: 217.2 32.6% 17.5%;
+  --color-ring: 220 91% 60%;
 }
