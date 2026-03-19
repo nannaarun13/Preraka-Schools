@@ -5,7 +5,10 @@ import { Home, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/components/auth/useAuth'; // ✅ IMPORTANT
+import { useAuth } from '@/components/auth/useAuth';
+
+// ✅ NEW
+import { useSchool } from '@/contexts/SchoolContext';
 
 // Managers
 import ContentManager from '@/components/admin/ContentManager';
@@ -29,6 +32,13 @@ const AdminDashboard = () => {
   // 🔐 AUTH STATE
   const { user, loading } = useAuth();
 
+  // ✅ NEW: SCHOOL DATA FOR STATS
+  const { state } = useSchool();
+
+  const totalGallery = state?.data?.galleryImages?.length || 0;
+  const totalNotices = state?.data?.notices?.length || 0;
+  const totalAdmissions = state?.data?.admissionInquiries?.length || 0;
+
   // ⛔ BLOCK until auth ready
   if (loading) {
     return null;
@@ -40,18 +50,26 @@ const AdminDashboard = () => {
     return null;
   }
 
+  // ✅ FIXED (IMPORTANT)
   const handleViewSite = () => {
-    navigate('/');
+    window.open('/', '_blank'); // 🔥 FIX
   };
 
+  // ✅ IMPROVED LOGOUT
   const handleLogout = async () => {
     try {
       await auth.signOut();
+
+      localStorage.clear();
+      sessionStorage.clear();
+
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
-      navigate('/login');
+
+      window.location.href = '/login'; // 🔥 FIX
+
     } catch (error) {
       console.error('Logout error:', error);
       toast({
@@ -67,6 +85,8 @@ const AdminDashboard = () => {
       <SecurityHeadersEnhanced />
 
       <div className="container mx-auto px-4 py-8">
+
+        {/* HEADER */}
         <div className="mb-8 flex items-center justify-between flex-col md:flex-row gap-4">
           <div>
             <h1 className="text-3xl font-bold text-school-blue mb-2">
@@ -96,6 +116,31 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* ✅ NEW: DASHBOARD STATS */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+            <h3 className="text-gray-500">Gallery Images</h3>
+            <p className="text-3xl font-bold text-blue-600">
+              {totalGallery}
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+            <h3 className="text-gray-500">Notices</h3>
+            <p className="text-3xl font-bold text-orange-500">
+              {totalNotices}
+            </p>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+            <h3 className="text-gray-500">Admissions</h3>
+            <p className="text-3xl font-bold text-green-600">
+              {totalAdmissions}
+            </p>
+          </div>
+        </div>
+
+        {/* TABS */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="overflow-x-auto pb-2">
             <TabsList className="inline-flex min-w-max lg:grid lg:grid-cols-7">
