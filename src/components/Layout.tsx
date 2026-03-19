@@ -20,6 +20,7 @@ const Layout = () => {
     }
   }, [location.pathname]);
 
+  // ✅ ADMIN / LOGIN (NO HEADER / FOOTER)
   if (isAdminPage || isLoginPage) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -28,16 +29,22 @@ const Layout = () => {
     );
   }
 
+  // ✅ MAIN WEBSITE
   return (
-    <div className="min-h-screen flex flex-col page-background">
+    <div className="min-h-screen flex flex-col bg-white">
 
+      {/* HEADER */}
       <Header />
+
+      {/* NAVBAR */}
       <Navigation />
 
-      <main className="flex-1">
+      {/* ✅ ONLY CONTENT HAS BACKGROUND */}
+      <main className="flex-1 page-background">
         <Outlet />
       </main>
 
+      {/* FOOTER */}
       <Footer />
 
     </div>

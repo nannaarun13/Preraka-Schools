@@ -91,3 +91,4 @@ html, body, #root {
 .fade-in {
   animation: fadeIn 0.6s ease-in-out;
 }
+<section className="relative py-32 flex items-center justify-center">
