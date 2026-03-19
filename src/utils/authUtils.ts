@@ -43,12 +43,12 @@ export interface AdminUser {
 }
 
 /* =======================
-   VALIDATION SCHEMAS
+   VALIDATION
 ======================= */
 
 export const loginSchema = z.object({
   email: z.string().email("Invalid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(1, "Password required"), // 🔥 FIXED
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
@@ -60,54 +60,64 @@ export const forgotPasswordSchema = z.object({
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 /* =======================
-   AUTH ACTIONS
+   LOGIN FUNCTION (FIXED)
 ======================= */
 
 export const handleLogin = async (
   data: LoginFormData
 ): Promise<User> => {
-  // 🛡️ HARD SAFETY (prevents indexOf crash)
-  const email =
-    typeof data?.email === "string" ? data.email.trim().toLowerCase() : "";
-  const password =
-    typeof data?.password === "string" ? data.password : "";
+  try {
+    console.log("STEP 1: START LOGIN");
 
-  if (!email || !password) {
-    throw new Error("Email and password are required");
+    const email = data.email.trim().toLowerCase();
+    const password = data.password;
+
+    // 🔐 Firebase Auth
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+
+    console.log("STEP 2: AUTH SUCCESS");
+
+    const user = cred.user;
+
+    // 🔥 SAFE ADMIN CHECK (NO FREEZE)
+    const allowed = await ensureAdminAccess(user);
+
+    console.log("STEP 3: ADMIN CHECK:", allowed);
+
+    if (!allowed) {
+      await signOut(auth);
+      throw new Error("Your account is not approved by admin.");
+    }
+
+    return user;
+
+  } catch (error) {
+    console.error("LOGIN FAILED:", error);
+    throw error; // 🔥 VERY IMPORTANT
   }
-
-  const cred = await signInWithEmailAndPassword(auth, email, password);
-  const user = cred.user;
-
-  const allowed = await ensureAdminAccess(user);
-
-  if (!allowed) {
-    await signOut(auth);
-    throw new Error("Your account is not approved by the Super Admin.");
-  }
-
-  return user;
 };
+
+/* =======================
+   LOGOUT
+======================= */
 
 export const handleLogout = async (): Promise<void> => {
   await signOut(auth);
 };
 
+/* =======================
+   FORGOT PASSWORD
+======================= */
+
 export const handleForgotPassword = async (
   data: ForgotPasswordFormData
 ): Promise<void> => {
-  const email =
-    typeof data?.email === "string" ? data.email.trim().toLowerCase() : "";
-
-  if (!email) {
-    throw new Error("Email is required");
-  }
-
+  const email = data.email.trim().toLowerCase();
   await sendPasswordResetEmail(auth, email);
 };
 
 /* =======================
-   ADMIN CORE LOGIC
+   SAFE ADMIN CHECK (FIXED)
 ======================= */
 
 export const ensureAdminAccess = async (
@@ -115,28 +125,37 @@ export const ensureAdminAccess = async (
 ): Promise<boolean> => {
   if (!user?.uid || !user.email) return false;
 
-  const email = user.email.toLowerCase();
-  const ref = doc(db, "admins", user.uid);
-  const snap = await getDoc(ref);
+  try {
+    console.log("CHECKING ADMIN ACCESS...");
 
-  // ✅ Admin exists
-  if (snap.exists()) {
-    return snap.data()?.status === "approved";
+    const ref = doc(db, "admins", user.uid);
+    const snap = await getDoc(ref);
+
+    // ✅ If exists
+    if (snap.exists()) {
+      return snap.data()?.status === "approved";
+    }
+
+    // 🔥 Auto-create super admin
+    if (user.email.toLowerCase() === DEFAULT_ADMIN_EMAIL) {
+      await setDoc(ref, {
+        uid: user.uid,
+        email: user.email.toLowerCase(),
+        status: "approved",
+        approvedAt: new Date().toISOString(),
+        approvedBy: "system",
+      });
+      return true;
+    }
+
+    return false;
+
+  } catch (error) {
+    console.error("ADMIN CHECK ERROR:", error);
+
+    // 🔥 IMPORTANT: Prevent freeze
+    return false;
   }
-
-  // 🔥 Auto-create Super Admin
-  if (email === DEFAULT_ADMIN_EMAIL) {
-    await setDoc(ref, {
-      uid: user.uid,
-      email,
-      status: "approved",
-      approvedAt: new Date().toISOString(),
-      approvedBy: "system",
-    });
-    return true;
-  }
-
-  return false;
 };
 
 /* =======================
@@ -186,8 +205,9 @@ export const updateAdminRequestStatus = async (
 
   await updateDoc(ref, updateData);
 };
+
 /* =======================
-   ROUTE ADMIN CHECK
+   ADMIN CHECK (ROUTE)
 ======================= */
 
 export const isUserAdmin = async (
