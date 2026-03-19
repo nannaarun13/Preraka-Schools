@@ -57,14 +57,13 @@ export interface ContactInfo {
   mapEmbed?: string
 }
 
-/* ✅ UPDATED SCHOOL DATA */
+/* ---------------- SCHOOL DATA ---------------- */
 
 export interface SchoolData {
   schoolName: string
   schoolLogo: string
   welcomeMessage: string
 
-  // ✅ NEW FIELDS (IMPORTANT)
   welcomeImage?: string
   schoolNameImage?: string
 
@@ -109,7 +108,6 @@ export const defaultSchoolData: SchoolData = {
   schoolLogo: "",
   welcomeMessage: "Welcome to Preraka Schools",
 
-  // ✅ NEW DEFAULTS
   welcomeImage: "",
   schoolNameImage: "",
 
@@ -163,78 +161,6 @@ const schoolReducer = (state: SchoolState, action: SchoolAction): SchoolState =>
         }
       }
 
-    case "ADD_NOTICE":
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          notices: [...state.data.notices, action.payload]
-        }
-      }
-
-    case "DELETE_NOTICE":
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          notices: state.data.notices.filter(n => n.id !== action.payload)
-        }
-      }
-
-    case "ADD_GALLERY_IMAGE":
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          galleryImages: [...state.data.galleryImages, action.payload]
-        }
-      }
-
-    case "DELETE_GALLERY_IMAGE":
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          galleryImages: state.data.galleryImages.filter(i => i.id !== action.payload)
-        }
-      }
-
-    case "ADD_LATEST_UPDATE":
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          latestUpdates: [...state.data.latestUpdates, action.payload]
-        }
-      }
-
-    case "DELETE_LATEST_UPDATE":
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          latestUpdates: state.data.latestUpdates.filter(u => u.id !== action.payload)
-        }
-      }
-
-    case "ADD_FOUNDER":
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          founders: [...state.data.founders, action.payload]
-        }
-      }
-
-    case "DELETE_FOUNDER":
-      return {
-        ...state,
-        data: {
-          ...state.data,
-          founders: state.data.founders.filter(f => f.id !== action.payload)
-        }
-      }
-
     default:
       return state
   }
@@ -268,9 +194,13 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
 
+    console.log("🔥 Subscribing to Firestore...") // ✅ NEW
+
     const unsubscribe = subscribeToSchoolData(
 
       (data) => {
+
+        console.log("✅ Firestore Data:", data) // ✅ NEW
 
         dispatch({
           type: "SET_DATA",
@@ -284,7 +214,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       (error) => {
 
-        console.error("Firestore error:", error)
+        console.error("❌ Firestore error:", error)
 
         dispatch({
           type: "SET_DATA",
@@ -295,28 +225,33 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     )
 
+    // ✅ NEW: FAILSAFE (prevents infinite loading)
+    const timeout = setTimeout(() => {
+      console.warn("⚠️ Firestore timeout, using default data")
+      dispatch({
+        type: "SET_DATA",
+        payload: defaultSchoolData
+      })
+    }, 5000)
+
     return () => {
       if (unsubscribe) unsubscribe()
+      clearTimeout(timeout)
     }
 
   }, [])
 
   const updateData = async (payload: Partial<SchoolData>) => {
 
-    // ✅ Optimistic UI update
     dispatch({
       type: "UPDATE_SCHOOL_DATA",
       payload
     })
 
     try {
-
       await updateSchoolData(payload)
-
     } catch (error) {
-
       console.error("Firestore update failed:", error)
-
     }
   }
 
@@ -325,8 +260,13 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   if (state.loading) {
 
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-white">
+
+        <Loader2 className="h-10 w-10 animate-spin text-blue-500 mb-4" />
+
+        {/* ✅ NEW TEXT */}
+        <p className="text-gray-600">Loading school data...</p>
+
       </div>
     )
 
