@@ -24,6 +24,11 @@ const ContentManager = () => {
     schoolName: "",
     schoolLogo: "",
     welcomeMessage: "",
+
+    // ✅ NEW FIELDS
+    welcomeImage: "",
+    schoolNameImage: "",
+
     email: "",
     phone: "",
     address: ""
@@ -39,6 +44,11 @@ const ContentManager = () => {
       schoolName: state?.data?.schoolName || "",
       schoolLogo: state?.data?.schoolLogo || "",
       welcomeMessage: state?.data?.welcomeMessage || "",
+
+      // ✅ NEW SYNC
+      welcomeImage: state?.data?.welcomeImage || "",
+      schoolNameImage: state?.data?.schoolNameImage || "",
+
       email: state?.data?.email || "",
       phone: state?.data?.phone || "",
       address: state?.data?.address || ""
@@ -164,6 +174,19 @@ const ContentManager = () => {
                 }
               />
 
+              {/* ✅ NEW: SCHOOL NAME IMAGE */}
+
+              <ImageUpload
+                label="School Name Image (Optional)"
+                currentImage={generalContent.schoolNameImage}
+                onImageUpload={(url) =>
+                  setGeneralContent((prev) => ({
+                    ...prev,
+                    schoolNameImage: url
+                  }))
+                }
+              />
+
               {/* SCHOOL NAME */}
 
               <div>
@@ -185,6 +208,19 @@ const ContentManager = () => {
                   onChange={handleInputChange}
                 />
               </div>
+
+              {/* ✅ NEW: WELCOME BACKGROUND IMAGE */}
+
+              <ImageUpload
+                label="Welcome Background Image"
+                currentImage={generalContent.welcomeImage}
+                onImageUpload={(url) =>
+                  setGeneralContent((prev) => ({
+                    ...prev,
+                    welcomeImage: url
+                  }))
+                }
+              />
 
               {/* EMAIL */}
 
