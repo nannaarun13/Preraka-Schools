@@ -2,138 +2,140 @@ import { useSchool } from '@/contexts/SchoolContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const About = () => {
+
   const { state } = useSchool();
 
-  // Safe fallback values
-  const schoolHistory = state?.data?.schoolHistory || "Our school has a proud tradition of academic excellence.";
-  const founderDetails = state?.data?.founderDetails || "Our founders believed in quality education for every child.";
+  // ✅ CONNECT ADMIN DATA
+  const history = state?.data?.history || "Our school has a proud tradition of excellence.";
+  const about = state?.data?.about || "We provide quality education.";
+  const mission = state?.data?.mission || "To empower students.";
+  const vision = state?.data?.vision || "To be a leading institution.";
   const founders = state?.data?.founders || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-school-blue-light via-white to-school-orange-light">
-      <div className="container mx-auto px-4 py-8 space-y-12">
 
-        {/* Page Header */}
-        <section className="text-center animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-bold text-school-blue mb-4">
+    <div className="min-h-screen bg-gray-50">
+
+      <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
+
+        {/* HEADER */}
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-blue-700">
             About Our School
           </h1>
-
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Learn about our rich history, vision, and commitment to educational excellence
+          <p className="text-gray-600 mt-2">
+            Learn about our history and values
           </p>
-        </section>
+        </div>
 
-        {/* School History */}
-        <section className="animate-fade-in">
-          <Card className="hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm border border-school-blue/20">
-            <CardHeader>
-              <CardTitle className="text-3xl text-school-blue">
-                Our History
-              </CardTitle>
-            </CardHeader>
+        {/* HISTORY */}
+        <Card className="rounded-xl shadow-md border">
+          <CardHeader>
+            <CardTitle className="text-2xl text-blue-700">
+              Our History
+            </CardTitle>
+          </CardHeader>
 
-            <CardContent>
-              <p className="text-lg text-gray-700 leading-relaxed">
-                {schoolHistory}
-              </p>
-            </CardContent>
-          </Card>
-        </section>
+          <CardContent>
+            <p className="text-gray-700 leading-relaxed">
+              {history}
+            </p>
+          </CardContent>
+        </Card>
 
-        {/* Founders */}
-        <section className="animate-fade-in">
-          <Card className="hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm border border-school-blue/20">
-            <CardHeader>
-              <CardTitle className="text-3xl text-school-blue">
-                Our Founders
-              </CardTitle>
-            </CardHeader>
+        {/* ABOUT */}
+        <Card className="rounded-xl shadow-md border">
+          <CardHeader>
+            <CardTitle className="text-2xl text-blue-700">
+              About School
+            </CardTitle>
+          </CardHeader>
 
-            <CardContent>
-              <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                {founderDetails}
-              </p>
+          <CardContent>
+            <p className="text-gray-700 leading-relaxed">
+              {about}
+            </p>
+          </CardContent>
+        </Card>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* FOUNDERS */}
+        <Card className="rounded-xl shadow-md border">
+          <CardHeader>
+            <CardTitle className="text-2xl text-blue-700">
+              Our Founders
+            </CardTitle>
+          </CardHeader>
 
-                {founders.length === 0 && (
-                  <p className="text-gray-500 text-center col-span-full">
-                    Founder information will be updated soon.
+          <CardContent>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+              {founders.length === 0 && (
+                <p className="text-gray-500 text-center col-span-full">
+                  Founder info coming soon
+                </p>
+              )}
+
+              {founders.map((f) => (
+                <div key={f.id} className="text-center">
+
+                  <img
+                    src={f.image}
+                    alt={f.name}
+                    className="w-28 h-28 object-cover rounded-full mx-auto mb-3 shadow"
+                  />
+
+                  <h4 className="font-semibold text-blue-700">
+                    {f.name}
+                  </h4>
+
+                  <p className="text-sm text-gray-600">
+                    {f.details}
                   </p>
-                )}
 
-                {founders.map((founder) => (
-                  <div key={founder.id} className="text-center">
+                </div>
+              ))}
 
-                    <img
-                      src={founder.image || "/placeholder.png"}
-                      alt={founder.name}
-                      className="w-32 h-32 object-cover rounded-full mx-auto mb-4 shadow-md"
-                    />
+            </div>
 
-                    <h4 className="text-xl font-semibold text-school-blue mb-2">
-                      {founder.name}
-                    </h4>
+          </CardContent>
+        </Card>
 
-                    <p className="text-gray-600 text-sm">
-                      {founder.details}
-                    </p>
+        {/* MISSION & VISION */}
+        <div className="grid md:grid-cols-2 gap-6">
 
-                  </div>
-                ))}
+          <Card className="rounded-xl shadow-md border">
+            <CardHeader>
+              <CardTitle className="text-xl text-blue-700">
+                Our Mission
+              </CardTitle>
+            </CardHeader>
 
-              </div>
+            <CardContent>
+              <p className="text-gray-700">
+                {mission}
+              </p>
             </CardContent>
           </Card>
-        </section>
 
-        {/* Mission & Vision */}
-        <section className="animate-fade-in">
+          <Card className="rounded-xl shadow-md border">
+            <CardHeader>
+              <CardTitle className="text-xl text-blue-700">
+                Our Vision
+              </CardTitle>
+            </CardHeader>
 
-          <div className="grid md:grid-cols-2 gap-8">
+            <CardContent>
+              <p className="text-gray-700">
+                {vision}
+              </p>
+            </CardContent>
+          </Card>
 
-            <Card className="hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm border border-school-blue/20">
-
-              <CardHeader>
-                <CardTitle className="text-2xl text-school-blue">
-                  Our Mission
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed">
-                  To provide exceptional education that empowers students to become
-                  confident, creative, and compassionate individuals who contribute
-                  positively to society while maintaining the highest academic standards.
-                </p>
-              </CardContent>
-
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm border border-school-blue/20">
-
-              <CardHeader>
-                <CardTitle className="text-2xl text-school-blue">
-                  Our Vision
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed">
-                  To be a leading educational institution that nurtures future leaders,
-                  innovators, and global citizens through excellence in teaching,
-                  character development, and holistic growth.
-                </p>
-              </CardContent>
-
-            </Card>
-
-          </div>
-
-        </section>
+        </div>
 
       </div>
+
     </div>
   );
 };
